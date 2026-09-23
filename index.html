@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>考公错题本</title>
+<style>
+:root{
+  --bg:#F4F2EE;
+  --card:#FFFFFF;
+  --card-2:#FAF8F4;
+  --primary:#7A8B8B;
+  --primary-soft:#B5C4C4;
+  --text:#3E3E3E;
+  --muted:#8C8C8C;
+  --border:#E6E2DA;
+  --danger:#B08A8A;
+  --accent:#A89CA3;
+  --shadow:0 2px 12px rgba(80,75,65,.08);
+  --radius:14px;
+  --nav-h:58px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.5;}
+body{min-height:100vh;max-width:720px;margin:0 auto;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);position:relative;}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+input,textarea,select{font-family:inherit;font-size:15px;color:var(--text);}
+a{color:var(--primary);text-decoration:none;}
+.hidden{display:none !important;}
+.icon{width:22px;height:22px;display:inline-block;vertical-align:middle;fill:currentColor;}
+.icon-sm{width:18px;height:18px;}
+.icon-lg{width:26px;height:26px;}
+
+/* Header */
+.header{position:sticky;top:0;z-index:20;background:var(--bg);padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.header h1{font-size:19px;font-weight:600;margin:0;}
+.header .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.header-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary);}
+.header-btn:active{background:rgba(122,139,139,.12);}
+
+/* Bottom nav */
+.nav{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding-bottom:var(--safe-bottom);z-index:30;}
+.nav-item{flex:1;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:11px;}
+.nav-item.active{color:var(--primary);}
+.nav-item .icon{width:24px;height:24px;}
+
+/* Views */
+.view{display:none;padding:12px 14px;}
+.view.active{display:block;}
+
+/* Section cards */
+.section-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.section-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);position:relative;min-height:110px;display:flex;flex-direction:column;justify-content:space-between;}
+.section-card .name{font-size:16px;font-weight:600;word-break:break-word;}
+.section-card .meta{display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
+.section-card .count{font-size:13px;color:var(--muted);}
+.badge{display:inline-block;background:var(--danger);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;}
+.section-menu{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+
+/* Question list */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;}
+.search-box{flex:1;background:var(--card);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);}
+.search-box input{border:none;outline:none;flex:1;background:transparent;font-size:14px;}
+.filter-chip{background:var(--card);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);box-shadow:var(--shadow);white-space:nowrap;}
+.filter-chip.active{background:var(--primary);color:#fff;}
+
+.q-card{background:var(--card);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow);margin-bottom:10px;display:flex;gap:12px;position:relative;}
+.q-thumb{width:80px;height:80px;border-radius:10px;background:var(--card-2);flex-shrink:0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.q-thumb img{width:100%;height:100%;object-fit:cover;}
+.q-thumb .more{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:1px 5px;border-radius:8px;}
+.q-body{flex:1;min-width:0;}
+.q-source{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.q-summary{font-size:14px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px;}
+.q-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.tag{font-size:12px;padding:2px 8px;border-radius:8px;color:#fff;}
+.q-answer{font-size:12px;color:var(--muted);}
+.q-del{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+
+/* Tags */
+.tag-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+.tag-chip{font-size:13px;padding:5px 11px;border-radius:14px;background:var(--card-2);color:var(--text);border:1px solid var(--border);}
+.tag-chip.on{color:#fff;border-color:transparent;}
+
+/* Forms / Modals */
+.mask{position:fixed;inset:0;background:rgba(40,40,40,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:92vh;border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;}
+.sheet-center{align-items:center;}
+.sheet-center .sheet{border-radius:18px;max-height:none;margin:20px;width:calc(100% - 40px);}
+.sheet-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.sheet-head h3{margin:0;font-size:17px;font-weight:600;}
+.sheet-body{padding:14px 16px;overflow-y:auto;flex:1;}
+.sheet-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+.field .req{color:var(--danger);}
+.field input,.field textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--card);outline:none;}
+.field textarea{min-height:80px;resize:vertical;}
+.field input:focus,.field textarea:focus{border-color:var(--primary);}
+
+.btn{flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:500;text-align:center;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:active{opacity:.85;}
+.btn-ghost{background:var(--card-2);color:var(--text);border:1px solid var(--border);}
+.btn-danger{background:var(--danger);color:#fff;}
+
+/* Image upload */
+.img-list{display:flex;flex-wrap:wrap;gap:8px;}
+.img-item{width:84px;height:84px;border-radius:10px;position:relative;overflow:hidden;background:var(--card-2);}
+.img-item img{width:100%;height:100%;object-fit:cover;}
+.img-item .rm{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.img-add{width:84px;height:84px;border-radius:10px;border:1.5px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:4px;}
+.img-add .icon{width:26px;height:26px;}
+.img-add-row{display:flex;gap:8px;margin-top:6px;}
+.img-add-btn{flex:1;padding:9px;border-radius:10px;background:var(--card-2);color:var(--primary);font-size:13px;display:flex;align-items:center;justify-content:center;gap:5px;}
+
+/* Detail */
+.detail-img{width:100%;border-radius:10px;margin-bottom:10px;cursor:zoom-in;}
+.detail-text{font-size:15px;line-height:1.6;margin-bottom:12px;white-space:pre-wrap;}
+.detail-row{margin-bottom:10px;}
+.detail-row .lbl{font-size:13px;color:var(--muted);margin-bottom:4px;}
+.toggle-btn{display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-size:14px;padding:6px 10px;border-radius:8px;background:var(--card-2);}
+
+/* Full image preview */
+.preview{position:fixed;inset:0;background:#000;z-index:200;display:flex;align-items:center;justify-content:center;}
+.preview img{max-width:100%;max-height:100%;object-fit:contain;}
+
+/* Review */
+.review-card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+.review-q{font-size:16px;line-height:1.6;margin-bottom:16px;white-space:pre-wrap;}
+.review-img{width:100%;border-radius:10px;margin-bottom:14px;}
+.option{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;background:var(--card-2);margin-bottom:8px;border:1.5px solid transparent;}
+.option.sel{border-color:var(--primary);background:rgba(122,139,139,.08);}
+.option.correct{border-color:var(--primary);background:rgba(122,139,139,.15);}
+.option.wrong{border-color:var(--danger);background:rgba(176,138,138,.12);}
+.option .idx{width:24px;height:24px;border-radius:50%;background:var(--primary-soft);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.option .idx.correct{background:var(--primary);}
+.option .idx.wrong{background:var(--danger);}
+.review-result{margin-top:14px;padding:12px;border-radius:10px;background:var(--card-2);font-size:14px;}
+.review-result .ok{color:var(--primary);font-weight:600;}
+.review-result .no{color:var(--danger);font-weight:600;}
+
+/* Calendar */
+.cal{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+.cal-wk{font-size:12px;color:var(--muted);padding:6px 0;}
+.cal-day{aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;position:relative;}
+.cal-day.has{background:var(--primary-soft);color:#fff;}
+.cal-day.today{border:1.5px solid var(--primary);}
+.cal-day.empty{visibility:hidden;}
+.cal-day.selected{background:var(--primary);color:#fff;}
+
+/* Stats */
+.stat-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-bottom:12px;}
+.stat-card h4{margin:0 0 12px;font-size:15px;}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;}
+.bar-row .lbl{width:90px;color:var(--muted);flex-shrink:0;}
+.bar-track{flex:1;height:14px;background:var(--card-2);border-radius:7px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:7px;}
+.bar-row .val{width:34px;text-align:right;font-size:12px;}
+
+/* Exam */
+.exam-scope{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.scope-chip{padding:7px 13px;border-radius:14px;background:var(--card-2);border:1px solid var(--border);font-size:13px;}
+.scope-chip.on{background:var(--primary);color:#fff;border-color:transparent;}
+.count-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.count-grid .c{padding:14px;border-radius:10px;background:var(--card-2);text-align:center;font-size:15px;border:1.5px solid transparent;}
+.count-grid .c.on{border-color:var(--primary);background:rgba(122,139,139,.08);}
+
+/* Settings */
+.set-item{background:var(--card);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.set-item .t{font-size:15px;}
+.set-item .d{font-size:12px;color:var(--muted);margin-top:2px;}
+.set-item .ic{color:var(--muted);}
+
+.countdown{font-size:13px;color:var(--primary);font-weight:600;}
+
+/* Empty */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty .icon{width:48px;height:48px;margin-bottom:12px;opacity:.4;}
+
+/* Toast */
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(50,50,50,.9);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:500;}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:0;height:0;}
+
+.inline-foot{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom));left:0;right:0;max-width:720px;margin:0 auto;background:var(--bg);padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:10px;z-index:15;}
+.view.has-foot{padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 70px);}
+
+@media print{
+  body{max-width:none;padding:0;background:#fff;}
+  .nav,.header,.no-print{display:none !important;}
+  .print-area{display:block !important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ VIEWS ============ -->
+<div id="view-book" class="view active"></div>
+<div id="view-review" class="view"></div>
+<div id="view-exam" class="view"></div>
+<div id="view-stats" class="view"></div>
+<div id="view-settings" class="view"></div>
+
+<!-- Bottom Nav -->
+<nav class="nav" id="nav">
+  <div class="nav-item active" data-v="book">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4V4zm9 0h7v16h-7a2 2 0 0 1 2-2V7a3 3 0 0 0-3-3z"/></svg>
+    <span>错题本</span>
+  </div>
+  <div class="nav-item" data-v="review">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+    <span>复习</span>
+  </div>
+  <div class="nav-item" data-v="exam">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M9 2h6a1 1 0 0 1 1 1v1H8V3a1 1 0 0 1 1-1zM5 5h14v16H5V5zm3 4h8v2H8V9zm0 4h8v2H8v-2zm0 4h5v2H8v-2z"/></svg>
+    <span>组卷</span>
+  </div>
+  <div class="nav-item" data-v="stats">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M4 20h16M6 20V10h3v10H6zm5 0V4h3v16h-3zm5 0v-7h3v7h-3z"/></svg>
+    <span>统计</span>
+  </div>
+  <div class="nav-item" data-v="settings">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3a7.97 7.97 0 0 0-.14-1.39l2.03-1.58-2-3.46-2.39.96a7.9 7.9 0 0 0-2.4-1.39L15.5 2h-4l-.54 2.14a7.9 7.9 0 0 0-2.4 1.39l-2.39-.96-2 3.46 2.03 1.58A7.97 7.97 0 0 0 3.06 11H1v2h2.06a7.97 7.97 0 0 0 .14 1.39l-2.03 1.58 2 3.46 2.39-.96a7.9 7.9 0 0 0 2.4 1.39L11.5 22h4l.54-2.14a7.9 7.9 0 0 0 2.4-1.39l2.39.96 2-3.46-2.03-1.58c.09-.46.14-.92.14-1.39H23v-2h-2.06z"/></svg>
+    <span>设置</span>
+  </div>
+</nav>
+
+<!-- Modal container -->
+<div id="modal-root"></div>
+
+<script>
+/* ============================================================
+   考公错题本 - 单文件应用
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+
+// Morandi 8-color palette
+const MORANDI = ['#9CA8A3','#A89CA3','#A3A89C','#A8A39C','#9CA3A8','#A39CA8','#A89C9C','#9CA8A8'];
+function colorFor(name){
+  let h=0; for(let i=0;i<name.length;i++){h=(h*31+name.charCodeAt(i))>>>0;}
+  return MORANDI[h % MORANDI.length];
+}
+
+const REVIEW_INTERVALS = [1,2,4,7,15]; // days
+const DAY = 86400000;
+const todayStr = d => { const x=d||new Date(); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+const startOfDay = d => { const x=d?new Date(d):new Date(); x.setHours(0,0,0,0); return x; };
+
+/* ---------- IndexedDB ---------- */
+const DB_NAME='ExamWrongBook', DB_VER=2;
+let db;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME,DB_VER);
+    r.onupgradeneeded=e=>{
+      const d=e.target.result;
+      ['sections','questions','tags','checkins'].forEach(n=>{ if(!d.objectStoreNames.contains(n)) d.createObjectStore(n,{keyPath:'id'}); });
+      if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings',{keyPath:'k'});
+    };
+    r.onsuccess=e=>{ db=e.target.result; res(); };
+    r.onerror=e=>rej(e.target.error);
+  });
+}
+function tx(store,mode){ return db.transaction(store,mode).objectStore(store); }
+function dbGet(store,key){ return new Promise((res,rej)=>{ const r=tx(store,'readonly').get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+function dbGetAll(store){ return new Promise((res,rej)=>{ const r=tx(store,'readonly').getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error); }); }
+function dbPut(store,val){ return new Promise((res,rej)=>{ const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+function dbDel(store,key){ return new Promise((res,rej)=>{ const r=tx(store,'readwrite').delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+
+/* Backup to localStorage */
+async function backup(){
+  try{
+    const data={
+      sections:await dbGetAll('sections'),
+      questions:await dbGetAll('questions'),
+      tags:await dbGetAll('tags'),
+      checkins:await dbGetAll('checkins'),
+      settings:(await dbGetAll('settings')).reduce((a,s)=>{a[s.k]=s.v;return a;},{}),
+      ts:Date.now()
+    };
+    localStorage.setItem('ewb_backup',JSON.stringify(data));
+  }catch(e){ console.warn('backup fail',e); }
+}
+async function restoreFromBackup(){
+  try{
+    const existing=await dbGetAll('questions');
+    if(existing && existing.length>0) return; // IndexedDB has data, no need to restore
+    const raw=localStorage.getItem('ewb_backup');
+    if(!raw) return;
+    const data=JSON.parse(raw);
+    for(const s of data.sections||[]) await dbPut('sections',s);
+    for(const q of data.questions||[]) await dbPut('questions',q);
+    for(const t of data.tags||[]) await dbPut('tags',t);
+    for(const c of data.checkins||[]) await dbPut('checkins',c);
+    for(const k in data.settings||{}) await dbPut('settings',{k,v:data.settings[k]});
+  }catch(e){ console.warn('restore fail',e); }
+}
+
+/* ---------- State ---------- */
+const S={
+  view:'book',
+  currentSection:null,
+  sections:[], questions:[], tags:[], checkins:[],
+  search:'', filterTag:'', filterReason:'',
+  exam:{scopeType:'all',scopeId:null,count:10},
+};
+
+async function loadAll(){
+  S.sections=await dbGetAll('sections');
+  S.questions=await dbGetAll('questions');
+  S.tags=await dbGetAll('tags');
+  S.checkins=await dbGetAll('checkins');
+  // normalize legacy
+  for(const q of S.questions){
+    if(!q.errorReasons) q.errorReasons=[];
+    if(!q.images) q.images=[];
+    if(!q.tags) q.tags=[];
+  }
+}
+
+/* ---------- Navigation ---------- */
+function navTo(v){
+  S.view=v;
+  $$('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.v===v));
+  $$('.view').forEach(el=>{ el.classList.toggle('active',el.id==='view-'+v); el.classList.remove('has-foot'); });
+  render[v]();
+  window.scrollTo(0,0);
+}
+$$('.nav-item').forEach(n=>n.addEventListener('click',()=>navTo(n.dataset.v)));
+
+/* ---------- Toast / Modal ---------- */
+function toast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),1600);
+}
+function modal(html,{center=false,bodyClass=''}={}){
+  const root=$('#modal-root');
+  const mask=document.createElement('div');
+  mask.className='mask'+(center?' sheet-center':'');
+  mask.innerHTML=`<div class="sheet ${bodyClass}">${html}</div>`;
+  mask.addEventListener('click',e=>{ if(e.target===mask) mask.remove(); });
+  root.appendChild(mask);
+  return {el:mask, sheet:mask.querySelector('.sheet')};
+}
+function confirmModal(title,msg,onOk){
+  const {el}=modal(`
+    <div class="sheet-center" style="padding:0"><div class="sheet" style="width:100%;max-width:320px;border-radius:14px;">
+      <div class="sheet-head"><h3>${title}</h3></div>
+      <div class="sheet-body" style="font-size:14px;color:var(--muted)">${msg}</div>
+      <div class="sheet-foot">
+        <button class="btn btn-ghost" id="m-cancel">取消</button>
+        <button class="btn btn-danger" id="m-ok">确定</button>
+      </div>
+    </div></div>`);
+  el.querySelector('#m-cancel').onclick=()=>el.remove();
+  el.querySelector('#m-ok').onclick=()=>{ el.remove(); onOk(); };
+}
+
+/* ============================================================
+   BOOK VIEW
+   ============================================================ */
+const render={};
+render.book=()=>{
+  const v=$('#view-book');
+  if(S.currentSection){
+    renderSectionList(v);
+  }else{
+    renderSectionGrid(v);
+  }
+};
+
+function renderSectionGrid(v){
+  const countOf=sid=>S.questions.filter(q=>q.sectionId===sid).length;
+  const pendingOf=sid=>S.questions.filter(q=>q.sectionId===sid && isDue(q)).length;
+  const cards=S.sections.map(s=>`
+    <div class="section-card" data-sid="${s.id}">
+      <div class="section-menu" data-sid="${s.id}">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+      </div>
+      <div class="name">${esc(s.name)}</div>
+      <div class="meta">
+        <span class="count">${countOf(s.id)} 题</span>
+        ${pendingOf(s.id)>0?`<span class="badge">待复习 ${pendingOf(s.id)}</span>`:''}
+      </div>
+    </div>`).join('');
+  v.innerHTML=`
+    <div class="header">
+      <div><h1>错题本</h1><div class="sub">共 ${S.sections.length} 个板块 · ${S.questions.length} 道错题</div></div>
+      <button class="header-btn" id="add-section" title="新建板块">
+        <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="section-grid">${cards}</div>
+    ${S.sections.length===0?`<div class="empty"><svg class="icon" viewBox="0 0 24 24"><path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4V4zm9 0h7v16h-7a2 2 0 0 1 2-2V7a3 3 0 0 0-3-3z"/></svg><div>还没有板块，点右上角加号新建</div></div>`:''}
+  `;
+  v.querySelectorAll('.section-card').forEach(c=>{
+    c.onclick=e=>{
+      if(e.target.closest('.section-menu')) return;
+      S.currentSection=c.dataset.sid; render.book();
+    };
+  });
+  v.querySelectorAll('.section-menu').forEach(m=>{
+    m.onclick=e=>{ e.stopPropagation(); showSectionMenu(m.dataset.sid, m); };
+  });
+  $('#add-section').onclick=()=>showSectionForm();
+}
+
+function showSectionMenu(sid, anchor){
+  const s=S.sections.find(x=>x.id===sid);
+  if(!s) return;
+  const cnt=S.questions.filter(q=>q.sectionId===sid).length;
+  const {el}=modal(`
+    <div class="sheet-body" style="padding:8px 0">
+      <div class="set-item" style="box-shadow:none;margin:0;border-radius:0" id="m-rename">
+        <div class="t">修改名称</div><div class="ic"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>
+      </div>
+      <div class="set-item" style="box-shadow:none;margin:0;border-radius:0;color:var(--danger)" id="m-del">
+        <div class="t">删除</div><div class="ic"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div>
+      </div>
+      <div class="set-item" style="box-shadow:none;margin:0;border-radius:0" id="m-cancel">
+        <div class="t">取消</div>
+      </div>
+    </div>`);
+  el.querySelector('#m-rename').onclick=()=>{ el.remove(); showSectionForm(s); };
+  el.querySelector('#m-del').onclick=()=>{ el.remove(); confirmModal('删除板块',`确定删除「${esc(s.name)}」吗？该板块下的 ${cnt} 道错题将一并删除。`,async()=>{
+    for(const q of S.questions.filter(q=>q.sectionId===sid)) await dbDel('questions',q.id);
+    await dbDel('sections',sid);
+    await loadAll(); await backup(); render.book(); toast('已删除');
+  });};
+  el.querySelector('#m-cancel').onclick=()=>el.remove();
+}
+
+function showSectionForm(s){
+  const editing=!!s;
+  const {el}=modal(`
+    <div class="sheet-head"><h3>${editing?'修改板块':'新建板块'}</h3></div>
+    <div class="sheet-body">
+      <div class="field"><label>板块名称</label>
+        <input id="sec-name" value="${editing?esc(s.name):''}" placeholder="如：言语理解">
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-ghost" id="m-cancel">取消</button>
+      <button class="btn btn-primary" id="m-ok">保存</button>
+    </div>`);
+  const inp=el.querySelector('#sec-name');
+  setTimeout(()=>inp.focus(),100);
+  el.querySelector('#m-cancel').onclick=()=>el.remove();
+  el.querySelector('#m-ok').onclick=async()=>{
+    const name=inp.value.trim();
+    if(!name){ toast('请输入名称'); return; }
+    if(editing){ s.name=name; await dbPut('sections',s); }
+    else { await dbPut('sections',{id:uid(),name,createdAt:Date.now()}); }
+    await loadAll(); await backup(); el.remove(); render.book(); toast('已保存');
+  };
+}
+
+function renderSectionList(v){
+  const s=S.sections.find(x=>x.id===S.currentSection);
+  if(!s){ S.currentSection=null; render.book(); return; }
+  let qs=S.questions.filter(q=>q.sectionId===S.currentSection);
+  if(S.search){ const k=S.search.toLowerCase(); qs=qs.filter(q=>(q.text||'').toLowerCase().includes(k)||(q.source||'').toLowerCase().includes(k)); }
+  if(S.filterTag) qs=qs.filter(q=>q.tags.includes(S.filterTag));
+  if(S.filterReason) qs=qs.filter(q=>q.errorReasons.includes(S.filterReason));
+  const allTags=[...new Set(S.questions.flatMap(q=>q.tags))];
+  const allReasons=[...new Set(S.questions.flatMap(q=>q.errorReasons))];
+
+  const cards=qs.map(q=>cardHTML(q)).join('');
+  v.innerHTML=`
+    <div class="header">
+      <div><h1>${esc(s.name)}</h1><div class="sub">${qs.length} 道错题</div></div>
+      <div style="display:flex;gap:4px">
+        <button class="header-btn" id="back-sec" title="返回">
+          <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        </button>
+        <button class="header-btn" id="add-q" title="添加错题">
+          <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" style="color:var(--muted)"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+        <input id="search-inp" placeholder="搜索题目或来源" value="${esc(S.search)}">
+      </div>
+    </div>
+    ${allTags.length?`<div class="tag-wrap" style="margin-bottom:10px">
+      ${allTags.map(t=>`<span class="tag-chip ${S.filterTag===t?'on':''}" data-tag="${esc(t)}" style="${S.filterTag===t?`background:${colorFor(t)}`:''}">${esc(t)}</span>`).join('')}
+    </div>`:''}
+    ${allReasons.length?`<div class="tag-wrap" style="margin-bottom:12px">
+      ${allReasons.map(t=>`<span class="tag-chip ${S.filterReason===t?'on':''}" data-reason="${esc(t)}" style="${S.filterReason===t?`background:${colorFor(t)}`:''}">${esc(t)}</span>`).join('')}
+    </div>`:''}
+    <div id="q-list">${cards || `<div class="empty"><svg class="icon" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/></svg><div>暂无错题，点右上角添加</div></div>`}</div>
+  `;
+  $('#back-sec').onclick=()=>{ S.currentSection=null; S.search=''; S.filterTag=''; S.filterReason=''; render.book(); };
+  $('#add-q').onclick=()=>showQuestionForm();
+  const sinp=$('#search-inp'); sinp.oninput=()=>{ S.search=sinp.value; render.book(); };
+  v.querySelectorAll('[data-tag]').forEach(c=>c.onclick=()=>{ S.filterTag=S.filterTag===c.dataset.tag?'':c.dataset.tag; render.book(); });
+  v.querySelectorAll('[data-reason]').forEach(c=>c.onclick=()=>{ S.filterReason=S.filterReason===c.dataset.reason?'':c.dataset.reason; render.book(); });
+  bindCardEvents(v);
+}
+
+function cardHTML(q){
+  const thumb=q.images[0]?`<img src="${q.images[0]}" alt="">`:`<svg class="icon" style="color:var(--border)" viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>`;
+  return `<div class="q-card" data-qid="${q.id}">
+    <div class="q-thumb">${thumb}${q.images.length>1?`<span class="more">+${q.images.length-1}</span>`:''}</div>
+    <div class="q-body">
+      ${q.source?`<div class="q-source">${esc(q.source)}</div>`:''}
+      <div class="q-summary">${esc(q.text||'(图片题)')}</div>
+      <div class="q-tags">${q.tags.map(t=>`<span class="tag" style="background:${colorFor(t)}">${esc(t)}</span>`).join('')}${q.errorReasons.map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.8">${esc(t)}</span>`).join('')}</div>
+      ${q.answer?`<div class="q-answer">答案：${esc(q.answer)}</div>`:''}
+    </div>
+    <button class="q-del" data-del="${q.id}"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+  </div>`;
+}
+function bindCardEvents(v){
+  v.querySelectorAll('.q-card').forEach(c=>{
+    c.onclick=e=>{ if(e.target.closest('.q-del')) return; showQuestionDetail(c.dataset.qid); };
+  });
+  v.querySelectorAll('.q-del').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const qid=b.dataset.del;
+    confirmModal('删除错题','确定删除这道错题吗？',async()=>{
+      await dbDel('questions',qid); await loadAll(); await backup(); render.book(); toast('已删除');
+    });
+  });
+}
+
+/* ---------- Question form ---------- */
+function showQuestionForm(q){
+  const editing=!!q;
+  const data={ images:[...(q?.images||[])], tags:[...(q?.tags||[])], errorReasons:[...(q?.errorReasons||[])] };
+  const histTags=[...new Set(S.questions.flatMap(x=>x.tags))];
+  const histReasons=[...new Set(S.questions.flatMap(x=>x.errorReasons))];
+  const {el}=modal(`
+    <div class="sheet-head"><h3>${editing?'编辑错题':'添加错题'}</h3><button id="m-close" style="color:var(--muted)"><svg class="icon" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button></div>
+    <div class="sheet-body">
+      <div class="field"><label>题目图片（可多张）</label>
+        <div class="img-list" id="img-list"></div>
+        <div class="img-add-row">
+          <label class="img-add-btn"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M9 2L7.17 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3.17L15 2H9zm3 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>拍照<input type="file" accept="image/*" capture="environment" id="cam-inp" hidden multiple></label>
+          <label class="img-add-btn"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/></svg>相册<input type="file" accept="image/*" id="alb-inp" hidden multiple></label>
+        </div>
+      </div>
+      <div class="field"><label>题目文字</label><textarea id="f-text" placeholder="可输入题干内容...">${esc(q?.text||'')}</textarea></div>
+      <div class="field"><label>错误原因 <span class="req">*</span></label>
+        <input id="f-reason-inp" placeholder="输入后回车添加，多个用逗号分隔">
+        <div class="tag-wrap" id="reason-tags" style="margin-top:8px"></div>
+      </div>
+      <div class="field"><label>题型标签</label>
+        <input id="f-tag-inp" placeholder="输入后回车添加，多个用逗号分隔">
+        <div class="tag-wrap" id="q-tags" style="margin-top:8px"></div>
+      </div>
+      <div class="field"><label>题目来源</label><input id="f-source" value="${esc(q?.source||'')}" placeholder="如：2024国考副省级"></div>
+      <div class="field"><label>正确答案</label><input id="f-answer" value="${esc(q?.answer||'')}" placeholder="如：B"></div>
+      <div class="field"><label>解题思路</label><textarea id="f-analysis" placeholder="可选，记录正确解法...">${esc(q?.analysis||'')}</textarea></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-ghost" id="m-cancel">取消</button>
+      <button class="btn btn-primary" id="m-ok">保存</button>
+    </div>`);
+
+  const imgList=el.querySelector('#img-list');
+  const renderImgs=()=>{
+    imgList.innerHTML=data.images.map((src,i)=>`<div class="img-item"><img src="${src}"><button class="rm" data-i="${i}">×</button></div>`).join('');
+    imgList.querySelectorAll('.rm').forEach(b=>b.onclick=()=>{ data.images.splice(+b.dataset.i,1); renderImgs(); });
+  };
+  renderImgs();
+  const addFiles=files=>{
+    Array.from(files).forEach(f=>{
+      const reader=new FileReader();
+      reader.onload=e=>compressImage(e.target.result,1200,0.8).then(src=>{ data.images.push(src); renderImgs(); });
+      reader.readAsDataURL(f);
+    });
+  };
+  el.querySelector('#cam-inp').onchange=e=>addFiles(e.target.files);
+  el.querySelector('#alb-inp').onchange=e=>addFiles(e.target.files);
+
+  const renderTags=(wrap,arr,hist)=>{
+    wrap.innerHTML=arr.map(t=>`<span class="tag-chip on" style="background:${colorFor(t)}" data-v="${esc(t)}">${esc(t)}</span>`).join('')
+      + hist.filter(t=>!arr.includes(t)).map(t=>`<span class="tag-chip" data-v="${esc(t)}">${esc(t)}</span>`).join('');
+    wrap.querySelectorAll('.tag-chip').forEach(c=>c.onclick=()=>{
+      const v=c.dataset.v;
+      if(arr.includes(v)){ arr.splice(arr.indexOf(v),1); } else { arr.push(v); }
+      renderTags(wrap,arr,hist);
+    });
+  };
+  const tagWrap=el.querySelector('#q-tags');
+  const reasonWrap=el.querySelector('#reason-tags');
+  renderTags(tagWrap,data.tags,histTags);
+  renderTags(reasonWrap,data.errorReasons,histReasons);
+
+  const parseInput=(val,arr,wrap,hist)=>{
+    val.split(/[,，]/).map(s=>s.trim()).filter(Boolean).forEach(t=>{ if(!arr.includes(t)) arr.push(t); });
+    renderTags(wrap,arr,hist);
+  };
+  const tagInp=el.querySelector('#f-tag-inp');
+  const reasonInp=el.querySelector('#f-reason-inp');
+  const commitTag=()=>{ if(tagInp.value.trim()){ parseInput(tagInp.value,data.tags,tagWrap,histTags); tagInp.value=''; } };
+  const commitReason=()=>{ if(reasonInp.value.trim()){ parseInput(reasonInp.value,data.errorReasons,reasonWrap,histReasons); reasonInp.value=''; } };
+  tagInp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); commitTag(); } });
+  tagInp.addEventListener('blur',commitTag);
+  reasonInp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); commitReason(); } });
+  reasonInp.addEventListener('blur',commitReason);
+
+  el.querySelector('#m-close').onclick=()=>el.remove();
+  el.querySelector('#m-cancel').onclick=()=>el.remove();
+  el.querySelector('#m-ok').onclick=async()=>{
+    commitReason(); commitTag();
+    const text=el.querySelector('#f-text').value.trim();
+    if(!text && data.images.length===0){ toast('请输入题目或上传图片'); return; }
+    if(data.errorReasons.length===0){ toast('请填写错误原因'); return; }
+    const obj={
+      id:q?.id||uid(),
+      sectionId:S.currentSection,
+      text, images:data.images, tags:data.tags, errorReasons:data.errorReasons,
+      source:el.querySelector('#f-source').value.trim(),
+      answer:el.querySelector('#f-answer').value.trim(),
+      analysis:el.querySelector('#f-analysis').value.trim(),
+      createdAt:q?.createdAt||Date.now(),
+      intervalIdx:q?.intervalIdx??0,
+      nextReview:q?.nextReview??Date.now(),
+      reviewCount:q?.reviewCount||0,
+    };
+    await dbPut('questions',obj);
+    await loadAll(); await backup(); el.remove(); render.book(); toast('已保存');
+  };
+}
+
+function compressImage(src,maxW,quality){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const scale=Math.min(1,maxW/img.width);
+      const c=document.createElement('canvas');
+      c.width=img.width*scale; c.height=img.height*scale;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>res(src);
+    img.src=src;
+  });
+}
+
+/* ---------- Question detail ---------- */
+function showQuestionDetail(qid){
+  const q=S.questions.find(x=>x.id===qid); if(!q) return;
+  let showAns=false;
+  const {el}=modal(`
+    <div class="sheet-head"><h3>错题详情</h3><button id="m-close" style="color:var(--muted)"><svg class="icon" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button></div>
+    <div class="sheet-body">
+      <div id="d-imgs"></div>
+      ${q.text?`<div class="detail-text">${esc(q.text)}</div>`:''}
+      <div class="detail-row"><div class="lbl">标签</div><div class="q-tags">${q.tags.map(t=>`<span class="tag" style="background:${colorFor(t)}">${esc(t)}</span>`).join('')}</div></div>
+      <div class="detail-row"><div class="lbl">错误原因</div><div class="q-tags">${q.errorReasons.map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.85">${esc(t)}</span>`).join('')}</div></div>
+      ${q.source?`<div class="detail-row"><div class="lbl">来源</div><div>${esc(q.source)}</div></div>`:''}
+      <button class="toggle-btn" id="toggle-ans"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg><span id="ta-txt">显示答案和解题思路</span></button>
+      <div id="ans-box" class="hidden" style="margin-top:12px">
+        ${q.answer?`<div class="detail-row"><div class="lbl">正确答案</div><div style="font-weight:600">${esc(q.answer)}</div></div>`:''}
+        ${q.analysis?`<div class="detail-row"><div class="lbl">解题思路</div><div class="detail-text" style="font-size:14px">${esc(q.analysis)}</div></div>`:''}
+      </div>
+      <div class="detail-row" style="margin-top:14px"><button class="btn btn-ghost" id="edit-q">编辑</button></div>
+    </div>
+    <div class="sheet-foot"><button class="btn btn-danger" id="m-del">删除</button></div>`);
+  const imgBox=el.querySelector('#d-imgs');
+  imgBox.innerHTML=q.images.map(src=>`<img class="detail-img" src="${src}">`).join('');
+  imgBox.querySelectorAll('img').forEach(img=>img.onclick=()=>showPreview(img.src));
+  const ansBox=el.querySelector('#ans-box');
+  el.querySelector('#toggle-ans').onclick=()=>{
+    showAns=!showAns; ansBox.classList.toggle('hidden',!showAns);
+    el.querySelector('#ta-txt').textContent=showAns?'隐藏答案和解题思路':'显示答案和解题思路';
+  };
+  el.querySelector('#m-close').onclick=()=>el.remove();
+  el.querySelector('#edit-q').onclick=()=>{ el.remove(); showQuestionForm(q); };
+  el.querySelector('#m-del').onclick=()=>confirmModal('删除错题','确定删除这道错题吗？',async()=>{
+    await dbDel('questions',qid); await loadAll(); await backup(); el.remove(); render.book(); toast('已删除');
+  });
+}
+function showPreview(src){
+  const p=document.createElement('div'); p.className='preview'; p.innerHTML=`<img src="${src}">`;
+  p.onclick=()=>p.remove(); document.body.appendChild(p);
+}
+
+/* ============================================================
+   REVIEW VIEW
+   ============================================================ */
+function isDue(q){ return q.nextReview<=Date.now(); }
+render.review=()=>{
+  const v=$('#view-review');
+  const due=S.questions.filter(isDue);
+  const today=todayStr();
+  const checked=S.checkins.find(c=>c.date===today);
+  const streak=calcStreak();
+  v.innerHTML=`
+    <div class="header"><div><h1>复习</h1><div class="sub">艾宾浩斯 1/2/4/7/15 天</div></div></div>
+    <div class="review-card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:22px;font-weight:600">${due.length}</div>
+          <div style="font-size:12px;color:var(--muted)">待复习题目</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:22px;font-weight:600">${streak}</div>
+          <div style="font-size:12px;color:var(--muted)">连续学习天数</div>
+        </div>
+        <button class="btn btn-primary" style="flex:none;width:auto;padding:10px 18px" id="start-review" ${due.length?'':'disabled'}>开始复习</button>
+      </div>
+    </div>
+    <div class="stat-card">
+      <h4>今日任务</h4>
+      <div id="due-list">${due.length?due.slice(0,20).map(q=>{
+        const s=S.sections.find(x=>x.id===q.sectionId);
+        return `<div class="q-card" style="margin-bottom:8px"><div class="q-body" style="min-width:0">
+          ${s?`<div class="q-source">${esc(s.name)}</div>`:''}
+          <div class="q-summary">${esc(q.text||'(图片题)')}</div>
+          <div class="q-tags">${q.errorReasons.map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.85">${esc(t)}</span>`).join('')}</div>
+        </div></div>`;
+      }).join(''):'<div class="empty" style="padding:30px">今天没有待复习的题目</div>'}</div>
+    </div>
+    <div class="stat-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h4 style="margin:0">学习打卡</h4>
+        <button class="btn btn-primary" style="flex:none;width:auto;padding:7px 14px;font-size:13px" id="checkin-btn" ${checked?'disabled':''}>${checked?'已打卡':'打卡'}</button>
+      </div>
+      <div id="cal"></div>
+    </div>
+    <div class="stat-card">
+      <h4>复习提醒</h4>
+      <button class="btn btn-ghost" id="export-cal">导出到日历</button>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">将待复习题目导出为日历事件，便于系统提醒</div>
+    </div>
+  `;
+  renderCalendar(v.querySelector('#cal'));
+  if(due.length) $('#start-review').onclick=()=>startReview(due);
+  $('#checkin-btn').onclick=async()=>{ await checkin(); render.review(); toast('打卡成功'); };
+  $('#export-cal').onclick=exportCalendarEvents;
+};
+
+function calcStreak(){
+  if(S.checkins.length===0) return 0;
+  const dates=new Set(S.checkins.map(c=>c.date));
+  let streak=0, d=new Date();
+  while(true){
+    const ds=todayStr(d);
+    if(dates.has(ds)){ streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  if(streak===0 && !dates.has(todayStr())){
+    // check yesterday
+  }
+  return streak;
+}
+async function checkin(){
+  const today=todayStr();
+  if(S.checkins.find(c=>c.date===today)) return;
+  await dbPut('checkins',{date:today,count:S.questions.filter(isDue).length,ts:Date.now()});
+  await loadAll(); await backup();
+}
+function renderCalendar(container){
+  const now=new Date();
+  const y=now.getFullYear(), m=now.getMonth();
+  const first=new Date(y,m,1).getDay();
+  const days=new Date(y,m+1,0).getDate();
+  const dates=new Set(S.checkins.map(c=>c.date));
+  const selected=todayStr();
+  let html=`<div class="cal-head"><span style="font-weight:600">${y}年${m+1}月</span></div>
+    <div class="cal-grid">${['日','一','二','三','四','五','六'].map(w=>`<div class="cal-wk">${w}</div>`).join('')}`;
+  for(let i=0;i<first;i++) html+='<div class="cal-day empty"></div>';
+  for(let d=1;d<=days;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=ds===todayStr();
+    const has=dates.has(ds);
+    html+=`<div class="cal-day ${has?'has':''} ${isToday?'today':''}">${d}</div>`;
+  }
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+function startReview(due){
+  const list=[...due];
+  let idx=0;
+  const answers={};
+  const v=$('#view-review');
+  const renderQ=()=>{
+    const q=list[idx];
+    v.className='view active has-foot';
+    v.innerHTML=`
+      <div class="header"><div><h1>复习 ${idx+1}/${list.length}</h1></div><button class="header-btn" id="rv-close">退出</button></div>
+      <div class="review-card">
+        ${q.images.map(src=>`<img class="review-img" src="${src}">`).join('')}
+        <div class="review-q">${esc(q.text||'')}</div>
+        <div id="opts"></div>
+        <div id="rv-result" class="hidden"></div>
+      </div>
+      <div class="inline-foot">
+        <button class="btn btn-ghost" id="rv-prev" ${idx===0?'disabled':''}>上一题</button>
+        <button class="btn btn-primary" id="rv-next">${idx===list.length-1?'提交':'下一题'}</button>
+      </div>
+    `;
+    const opts=['A','B','C','D'];
+    const optBox=v.querySelector('#opts');
+    optBox.innerHTML=opts.map(o=>`<div class="option ${answers[q.id]===o?'sel':''}" data-o="${o}"><div class="idx">${o}</div><div>选择 ${o}</div></div>`).join('');
+    optBox.querySelectorAll('.option').forEach(o=>o.onclick=()=>{ answers[q.id]=o.dataset.o; renderQ(); });
+    $('#rv-close').onclick=()=>{ if(confirm('确定退出复习？进度将不保存')) render.review(); };
+    $('#rv-prev').onclick=()=>{ idx--; renderQ(); };
+    $('#rv-next').onclick=()=>{
+      if(!answers[q.id]){ toast('请选择答案'); return; }
+      if(idx===list.length-1) finishReview(list,answers);
+      else { idx++; renderQ(); }
+    };
+  };
+  renderQ();
+}
+
+function finishReview(list,answers){
+  const v=$('#view-review');
+  v.className='view active';
+  let correct=0;
+  list.forEach(q=>{ if(answers[q.id]===q.answer) correct++; });
+  v.innerHTML=`
+    <div class="header"><h1>复习结果</h1></div>
+    <div class="review-card" style="text-align:center;margin-bottom:12px">
+      <div style="font-size:32px;font-weight:600;color:var(--primary)">${correct}/${list.length}</div>
+      <div style="color:var(--muted);font-size:13px">正确率 ${Math.round(correct/list.length*100)}%</div>
+    </div>
+    <div class="toolbar"><button class="filter-chip active" id="sw-err">错题解析</button><button class="filter-chip" id="sw-all">全部解析</button></div>
+    <div id="res-list"></div>
+    <div class="sheet-foot"><button class="btn btn-primary" id="done-rv">完成</button></div>
+  `;
+  let mode='err';
+  const renderRes=()=>{
+    const items=mode==='err'?list.filter(q=>answers[q.id]!==q.answer):list;
+    v.querySelector('#res-list').innerHTML=items.map((q,i)=>{
+      const isOk=answers[q.id]===q.answer;
+      return `<div class="review-card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="font-weight:600">第 ${list.indexOf(q)+1} 题</span>
+          <span class="${isOk?'ok':'no'}">${isOk?'正确':'错误'}</span>
+        </div>
+        ${q.images[0]?`<img class="review-img" src="${q.images[0]}">`:''}
+        <div class="review-q">${esc(q.text||'')}</div>
+        <div>你的答案：<b style="color:${isOk?'var(--primary)':'var(--danger)'}">${answers[q.id]}</b> ${!isOk?`正确答案：<b style="color:var(--primary)">${esc(q.answer||'?')}</b>`:''}</div>
+        ${q.analysis?`<div style="margin-top:8px;font-size:13px;color:var(--muted)">解析：${esc(q.analysis)}</div>`:''}
+      </div>`;
+    }).join('') || '<div class="empty">全部正确！</div>';
+  };
+  renderRes();
+  $('#sw-err').onclick=()=>{ mode='err'; $('#sw-err').classList.add('active'); $('#sw-all').classList.remove('active'); renderRes(); };
+  $('#sw-all').onclick=()=>{ mode='all'; $('#sw-all').classList.add('active'); $('#sw-err').classList.remove('active'); renderRes(); };
+  $('#done-rv').onclick=async()=>{
+    const now=Date.now();
+    for(const q of list){
+      const ok=answers[q.id]===q.answer;
+      q.nextReview=now+REVIEW_INTERVALS[q.intervalIdx]*DAY;
+      if(ok){ q.intervalIdx=Math.min(q.intervalIdx+1, REVIEW_INTERVALS.length-1); }
+      else { q.intervalIdx=0; }
+      q.reviewCount=(q.reviewCount||0)+1;
+      await dbPut('questions',q);
+    }
+    await checkin(); await loadAll(); await backup(); render.review(); toast('复习完成');
+  };
+}
+
+function exportCalendarEvents(){
+  const due=S.questions.filter(isDue);
+  if(!due.length){ toast('没有待复习题目'); return; }
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//ExamWrongBook//CN'];
+  const now=new Date();
+  due.forEach((q,i)=>{
+    const s=S.sections.find(x=>x.id===q.sectionId)||{};
+    const dt=new Date(now.getTime()+i*30*60000);
+    const fmt=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'00';
+    const end=new Date(dt.getTime()+30*60000);
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:'+uid()+'@ewb');
+    lines.push('DTSTAMP:'+fmt(now));
+    lines.push('DTSTART:'+fmt(dt));
+    lines.push('DTEND:'+fmt(end));
+    lines.push('SUMMARY:复习错题-'+(s.name||'错题'));
+    lines.push('DESCRIPTION:'+(q.text||'(图片题)').replace(/\n/g,' ').slice(0,100));
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  const blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='review.ics'; a.click();
+  URL.revokeObjectURL(url);
+  toast('日历文件已下载');
+}
+
+/* ============================================================
+   EXAM VIEW
+   ============================================================ */
+render.exam=()=>{
+  const v=$('#view-exam');
+  const allTags=[...new Set(S.questions.flatMap(q=>q.tags))];
+  if(S.questions.length===0){
+    v.innerHTML=`<div class="header"><h1>组卷</h1></div><div class="empty"><svg class="icon" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/></svg><div>暂无错题，先去添加错题吧</div></div>`;
+    return;
+  }
+  v.innerHTML=`
+    <div class="header"><h1>组卷</h1></div>
+    <div class="stat-card">
+      <h4>选择范围</h4>
+      <div class="exam-scope" id="scope-list">
+        <div class="scope-chip ${S.exam.scopeType==='all'?'on':''}" data-t="all">全部</div>
+        ${S.sections.map(s=>`<div class="scope-chip ${S.exam.scopeType==='section'&&S.exam.scopeId===s.id?'on':''}" data-t="section" data-id="${s.id}">${esc(s.name)}</div>`).join('')}
+      </div>
+      ${allTags.length?`<div class="exam-scope" style="margin-top:8px">${allTags.map(t=>`<div class="scope-chip ${S.exam.scopeType==='tag'&&S.exam.scopeId===t?'on':''}" data-t="tag" data-id="${esc(t)}" style="color:#fff;background:${colorFor(t)}">${esc(t)}</div>`).join('')}</div>`:''}
+    </div>
+    <div class="stat-card">
+      <h4>题目数量</h4>
+      <div class="count-grid">
+        ${[10,20,30,50].map(n=>`<div class="c ${S.exam.count===n?'on':''}" data-n="${n}">${n}题</div>`).join('')}
+      </div>
+    </div>
+    <div class="stat-card">
+      <button class="btn btn-primary" id="start-exam">开始答题</button>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">从所选范围随机抽取题目</div>
+    </div>
+  `;
+  v.querySelectorAll('#scope-list .scope-chip').forEach(c=>c.onclick=()=>{
+    S.exam.scopeType=c.dataset.t; S.exam.scopeId=c.dataset.id||null; render.exam();
+  });
+  v.querySelectorAll('[data-n]').forEach(c=>c.onclick=()=>{ S.exam.count=+c.dataset.n; render.exam(); });
+  $('#start-exam').onclick=startExam;
+};
+
+function getExamPool(){
+  let pool=[...S.questions];
+  if(S.exam.scopeType==='section') pool=pool.filter(q=>q.sectionId===S.exam.scopeId);
+  else if(S.exam.scopeType==='tag') pool=pool.filter(q=>q.tags.includes(S.exam.scopeId));
+  return pool;
+}
+function startExam(){
+  let pool=getExamPool();
+  if(pool.length===0){ toast('该范围没有题目'); return; }
+  const n=Math.min(S.exam.count,pool.length);
+  const shuffled=pool.sort(()=>Math.random()-0.5).slice(0,n);
+  let idx=0; const answers={};
+  const v=$('#view-exam');
+  const renderQ=()=>{
+    const q=shuffled[idx];
+    const opts=['A','B','C','D'];
+    v.className='view active has-foot';
+    v.innerHTML=`
+      <div class="header"><div><h1>答题 ${idx+1}/${shuffled.length}</h1></div><button class="header-btn" id="ex-close">退出</button></div>
+      <div class="review-card">
+        ${q.images.map(src=>`<img class="review-img" src="${src}">`).join('')}
+        <div class="review-q">${esc(q.text||'')}</div>
+        <div id="ex-opts">${opts.map(o=>`<div class="option ${answers[q.id]===o?'sel':''}" data-o="${o}"><div class="idx">${o}</div><div>选择 ${o}</div></div>`).join('')}</div>
+      </div>
+      <div class="inline-foot">
+        <button class="btn btn-ghost" id="ex-prev" ${idx===0?'disabled':''}>上一题</button>
+        <button class="btn btn-primary" id="ex-next">${idx===shuffled.length-1?'交卷':'下一题'}</button>
+      </div>
+    `;
+    v.querySelectorAll('#ex-opts .option').forEach(o=>o.onclick=()=>{ answers[q.id]=o.dataset.o; renderQ(); });
+    $('#ex-close').onclick=()=>{ if(confirm('退出？进度不保存')) render.exam(); };
+    $('#ex-prev').onclick=()=>{ idx--; renderQ(); };
+    $('#ex-next').onclick=()=>{
+      if(!answers[q.id]){ toast('请选择答案'); return; }
+      if(idx===shuffled.length-1) finishExam(shuffled,answers);
+      else { idx++; renderQ(); }
+    };
+  };
+  renderQ();
+}
+function finishExam(list,answers){
+  const v=$('#view-exam');
+  v.className='view active';
+  let correct=0; list.forEach(q=>{ if(answers[q.id]===q.answer) correct++; });
+  v.innerHTML=`
+    <div class="header"><h1>交卷结果</h1></div>
+    <div class="review-card" style="text-align:center;margin-bottom:12px">
+      <div style="font-size:32px;font-weight:600;color:var(--primary)">${correct}/${list.length}</div>
+      <div style="color:var(--muted);font-size:13px">正确率 ${Math.round(correct/list.length*100)}%</div>
+    </div>
+    <div id="ex-res">${list.map((q,i)=>{
+      const ok=answers[q.id]===q.answer;
+      return `<div class="review-card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="font-weight:600">第 ${i+1} 题</span>
+          <span class="${ok?'ok':'no'}">${ok?'正确':'错误'}</span>
+        </div>
+        ${q.images[0]?`<img class="review-img" src="${q.images[0]}">`:''}
+        <div class="review-q">${esc(q.text||'')}</div>
+        <div>你的答案：<b style="color:${ok?'var(--primary)':'var(--danger)'}">${answers[q.id]}</b> ${!ok?`正确答案：<b style="color:var(--primary)">${esc(q.answer||'?')}</b>`:''}</div>
+        ${q.analysis?`<div style="margin-top:8px;font-size:13px;color:var(--muted)">解析：${esc(q.analysis)}</div>`:''}
+      </div>`;
+    }).join('')}</div>
+    <div class="sheet-foot"><button class="btn btn-primary" id="ex-back">返回组卷</button></div>
+  `;
+  $('#ex-back').onclick=()=>render.exam();
+}
+
+/* ============================================================
+   STATS VIEW
+   ============================================================ */
+render.stats=()=>{
+  const v=$('#view-stats');
+  if(S.questions.length===0){
+    v.innerHTML=`<div class="header"><h1>统计</h1></div><div class="empty"><div>暂无数据</div></div>`; return;
+  }
+  // section counts
+  const secCounts=S.sections.map(s=>({name:s.name,count:S.questions.filter(q=>q.sectionId===s.id).length}));
+  const maxSec=Math.max(...secCounts.map(x=>x.count),1);
+  // error reasons distribution
+  const reasonMap={};
+  S.questions.forEach(q=>q.errorReasons.forEach(r=>{ reasonMap[r]=(reasonMap[r]||0)+1; }));
+  const reasons=Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]);
+  const maxR=Math.max(...reasons.map(x=>x[1]),1);
+  // cross section x reason
+  const crossRows=S.sections.map(s=>{
+    const qs=S.questions.filter(q=>q.sectionId===s.id);
+    const counts={};
+    qs.forEach(q=>q.errorReasons.forEach(r=>{ counts[r]=(counts[r]||0)+1; }));
+    return {name:s.name,counts};
+  });
+  const allReasons=[...new Set(S.questions.flatMap(q=>q.errorReasons))];
+
+  v.innerHTML=`
+    <div class="header"><h1>统计分析</h1></div>
+    <div class="stat-card">
+      <h4>各板块错题数量</h4>
+      ${secCounts.map(x=>`<div class="bar-row"><span class="lbl">${esc(x.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${x.count/maxSec*100}%;background:var(--primary)"></div></div><span class="val">${x.count}</span></div>`).join('')}
+    </div>
+    <div class="stat-card">
+      <h4>错误原因分布</h4>
+      ${reasons.map(([r,c])=>`<div class="bar-row"><span class="lbl" style="color:${colorFor(r)}">${esc(r)}</span><div class="bar-track"><div class="bar-fill" style="width:${c/maxR*100}%;background:${colorFor(r)}"></div></div><span class="val">${c}</span></div>`).join('')}
+    </div>
+    <div class="stat-card">
+      <h4>板块 × 错因 交叉分布</h4>
+      ${allReasons.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr><th style="text-align:left;padding:6px 4px;border-bottom:1px solid var(--border)">板块</th>${allReasons.map(r=>`<th style="padding:6px 4px;border-bottom:1px solid var(--border);color:${colorFor(r)}">${esc(r)}</th>`).join('')}</tr></thead>
+        <tbody>${crossRows.map(row=>`<tr><td style="padding:6px 4px;border-bottom:1px solid var(--border)">${esc(row.name)}</td>${allReasons.map(r=>`<td style="text-align:center;padding:6px 4px;border-bottom:1px solid var(--border)">${row.counts[r]||''}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table></div>`:'<div class="empty" style="padding:20px">暂无错因数据</div>'}
+    </div>
+  `;
+};
+
+/* ============================================================
+   SETTINGS VIEW
+   ============================================================ */
+render.settings=async()=>{
+  const v=$('#view-settings');
+  let countdown='';
+  try{ countdown=(await dbGet('settings','countdown'))?.v||''; }catch(e){}
+  v.innerHTML=`
+    <div class="header"><h1>设置</h1></div>
+    ${countdown?`<div class="stat-card"><div style="display:flex;justify-content:space-between;align-items:center"><span>考试倒计时</span><span class="countdown" id="cd-text"></span></div></div>`:''}
+    <div class="set-item" id="s-pdf">
+      <div><div class="t">导出PDF</div><div class="d">导出题目图片和文字，便于打印练习</div></div>
+      <div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 13v2h8v-2H8zm0 4v2h5v-2H8z"/></svg></div>
+    </div>
+    <div class="set-item" id="s-countdown">
+      <div><div class="t">考试倒计时</div><div class="d">自定义考试日期</div></div>
+      <div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 18H5V8h14v13zM7 10h5v5H7z"/></svg></div>
+    </div>
+    <div class="set-item" id="s-export">
+      <div><div class="t">导出JSON</div><div class="d">备份全部错题数据</div></div>
+      <div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></div>
+    </div>
+    <div class="set-item" id="s-import">
+      <div><div class="t">导入JSON</div><div class="d">从备份文件恢复数据</div></div>
+      <div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5z"/></svg></div>
+    </div>
+    <div class="set-item" id="s-about">
+      <div><div class="t">关于</div><div class="d">考公错题本 · 数据本地存储</div></div>
+      <div class="ic"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
+    </div>
+    <input type="file" id="import-file" accept="application/json" hidden>
+  `;
+  $('#s-pdf').onclick=showPdfExport;
+  $('#s-countdown').onclick=showCountdown;
+  $('#s-export').onclick=exportJSON;
+  $('#s-import').onclick=()=>$('#import-file').click();
+  $('#import-file').onchange=importJSON;
+  $('#s-about').onclick=()=>toast('考公错题本 v1.0 · 数据保存在本地');
+  if(countdown){ const cd=v.querySelector('#cd-text'); updateCountdown(cd,countdown); setInterval(()=>updateCountdown(cd,countdown),60000); }
+};
+function updateCountdown(el,target){
+  const t=new Date(target).getTime();
+  const diff=t-Date.now();
+  if(diff<=0){ el.textContent='已到考试日'; return; }
+  const d=Math.floor(diff/86400000);
+  el.textContent=`${d} 天`;
+}
+function showCountdown(){
+  (async()=>{
+    const cur=(await dbGet('settings','countdown'))?.v||'';
+    const {el}=modal(`
+      <div class="sheet-head"><h3>考试倒计时</h3></div>
+      <div class="sheet-body">
+        <div class="field"><label>考试日期</label><input type="date" id="cd-inp" value="${cur}"></div>
+      </div>
+      <div class="sheet-foot">
+        ${cur?`<button class="btn btn-danger" id="cd-del">删除</button>`:''}
+        <button class="btn btn-ghost" id="m-cancel">取消</button>
+        <button class="btn btn-primary" id="m-ok">保存</button>
+      </div>`);
+    el.querySelector('#m-cancel').onclick=()=>el.remove();
+    el.querySelector('#m-ok').onclick=async()=>{
+      const v=el.querySelector('#cd-inp').value;
+      await dbPut('settings',{k:'countdown',v}); await backup(); el.remove(); render.settings(); toast('已保存');
+    };
+    if(cur) el.querySelector('#cd-del').onclick=async()=>{ await dbDel('settings','countdown'); await backup(); el.remove(); render.settings(); toast('已删除'); };
+  })();
+}
+async function exportJSON(){
+  const data={
+    app:'考公错题本', version:1, exportedAt:new Date().toISOString(),
+    sections:await dbGetAll('sections'), questions:await dbGetAll('questions'),
+    tags:await dbGetAll('tags'), checkins:await dbGetAll('checkins'),
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='错题本备份_'+todayStr()+'.json'; a.click();
+  URL.revokeObjectURL(url); toast('已导出');
+}
+function importJSON(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=async()=>{
+    try{
+      const data=JSON.parse(r.result);
+      if(!data.questions) throw new Error('格式错误');
+      confirmModal('导入数据','导入将与现有数据合并，是否继续？',async()=>{
+        for(const s of data.sections||[]) await dbPut('sections',s);
+        for(const q of data.questions) await dbPut('questions',q);
+        for(const t of data.tags||[]) await dbPut('tags',t);
+        for(const c of data.checkins||[]) await dbPut('checkins',c);
+        await loadAll(); await backup(); render.book(); toast('导入成功');
+      });
+    }catch(err){ toast('文件格式错误'); }
+  };
+  r.readAsText(f);
+  e.target.value='';
+}
+
+/* PDF export via print */
+function showPdfExport(){
+  const {el}=modal(`
+    <div class="sheet-head"><h3>导出PDF</h3></div>
+    <div class="sheet-body">
+      <div class="field"><label>选择板块</label>
+        <div class="tag-wrap" id="pdf-secs">${S.sections.map(s=>`<label class="tag-chip" style="cursor:pointer"><input type="checkbox" value="${s.id}" checked style="display:none">${esc(s.name)}</label>`).join('')}</div>
+      </div>
+      <div class="field"><label>选择标签（可选）</label>
+        <div class="tag-wrap" id="pdf-tags">${[...new Set(S.questions.flatMap(q=>q.tags))].map(t=>`<label class="tag-chip" style="cursor:pointer"><input type="checkbox" value="${esc(t)}" style="display:none">${esc(t)}</label>`).join('')}</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted)">仅导出题目图片和文字，不含解析、来源、错因</div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-ghost" id="m-cancel">取消</button>
+      <button class="btn btn-primary" id="m-ok">生成并打印</button>
+    </div>`);
+  const secWrap=el.querySelector('#pdf-secs');
+  const tagWrap=el.querySelector('#pdf-tags');
+  secWrap.querySelectorAll('label').forEach(l=>{
+    l.onclick=()=>{ const cb=l.querySelector('input'); cb.checked=!cb.checked; l.style.background=cb.checked?'var(--primary)':''; l.style.color=cb.checked?'#fff':''; };
+    l.querySelector('input').checked=true; l.style.background='var(--primary)'; l.style.color='#fff';
+  });
+  tagWrap.querySelectorAll('label').forEach(l=>{
+    l.onclick=()=>{ const cb=l.querySelector('input'); cb.checked=!cb.checked; l.style.background=cb.checked?'var(--primary)':''; l.style.color=cb.checked?'#fff':''; };
+  });
+  el.querySelector('#m-cancel').onclick=()=>el.remove();
+  el.querySelector('#m-ok').onclick=()=>{
+    const secs=[...secWrap.querySelectorAll('input:checked')].map(x=>x.value);
+    const tags=[...tagWrap.querySelectorAll('input:checked')].map(x=>x.value);
+    if(!secs.length){ toast('请选择板块'); return; }
+    let qs=S.questions.filter(q=>secs.includes(q.sectionId));
+    if(tags.length) qs=qs.filter(q=>q.tags.some(t=>tags.includes(t)));
+    doPdfExport(qs); el.remove();
+  };
+}
+function doPdfExport(qs){
+  const w=window.open('','_blank');
+  if(!w){ toast('请允许弹出窗口'); return; }
+  const secName=sid=>S.sections.find(s=>s.id===sid)?.name||'';
+  const items=qs.map((q,i)=>`
+    <div class="pitem">
+      <div class="pno">${i+1}.</div>
+      <div class="pbody">
+        ${q.images.map(src=>`<img src="${src}">`).join('')}
+        ${q.text?`<div class="ptext">${esc(q.text)}</div>`:''}
+      </div>
+      <div class="pblank"></div>
+    </div>`).join('');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>错题导出</title>
+    <style>
+      body{font-family:-apple-system,"PingFang SC",sans-serif;padding:20px;color:#333;}
+      h2{font-size:16px;border-bottom:1px solid #ddd;padding-bottom:8px;}
+      .pitem{display:flex;gap:8px;margin-bottom:24px;page-break-inside:avoid;}
+      .pno{font-weight:bold;min-width:24px;}
+      .pbody{flex:1;}
+      .pbody img{max-width:100%;height:auto;display:block;margin-bottom:6px;}
+      .ptext{font-size:14px;line-height:1.6;white-space:pre-wrap;margin-bottom:6px;}
+      .pblank{height:60px;border-bottom:1px dashed #ccc;width:100%;margin-top:4px;}
+    </style></head><body>
+    <h2>错题导出（共 ${qs.length} 题）</h2>
+    ${items}
+    <script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>
+    </body></html>`);
+  w.document.close();
+}
+
+/* ---------- helpers ---------- */
+function esc(s){ if(s==null) return ''; return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ---------- Auto checkin at 4am + streak reset ---------- */
+async function autoCheckinAt4am(){
+  // On load, check if yesterday had review activity but no checkin
+  const yesterday=todayStr(new Date(Date.now()-DAY));
+  const hadReview=S.questions.some(q=>q.reviewCount>0 && q.nextReview>Date.now()-DAY*2);
+  // Simple: if user reviewed today (nextReview pushed forward), ensure checkin
+  const today=todayStr();
+  const reviewedToday=S.questions.some(q=>q.nextReview>startOfDay().getTime()+DAY*0.5 && q.reviewCount>0);
+  if(reviewedToday && !S.checkins.find(c=>c.date===today)){ await checkin(); }
+}
+
+/* ---------- Init ---------- */
+(async function init(){
+  await openDB();
+  await restoreFromBackup();
+  await loadAll();
+  await autoCheckinAt4am();
+  render.book();
+  // periodic backup
+  setInterval(backup,30000);
+})();
+</script>
+</body>
+</html>
