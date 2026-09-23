@@ -25,7 +25,8 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.5;}
-body{min-height:100vh;max-width:720px;margin:0 auto;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);position:relative;}
+html,body{height:100dvh;height:100vh;}
+body{max-width:720px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;}
 button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
 input,textarea,select{font-family:inherit;font-size:15px;color:var(--text);}
 a{color:var(--primary);text-decoration:none;}
@@ -35,21 +36,24 @@ a{color:var(--primary);text-decoration:none;}
 .icon-lg{width:26px;height:26px;}
 
 /* Header */
-.header{position:sticky;top:0;z-index:20;background:var(--bg);padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.header{flex-shrink:0;background:var(--bg);padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
 .header h1{font-size:19px;font-weight:600;margin:0;}
 .header .sub{font-size:12px;color:var(--muted);margin-top:2px;}
 .header-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary);}
 .header-btn:active{background:rgba(122,139,139,.12);}
 
 /* Bottom nav */
-.nav{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding-bottom:var(--safe-bottom);z-index:30;}
+.nav{flex-shrink:0;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding-bottom:var(--safe-bottom);}
 .nav-item{flex:1;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:11px;}
 .nav-item.active{color:var(--primary);}
 .nav-item .icon{width:24px;height:24px;}
 
 /* Views */
-.view{display:none;padding:12px 14px;}
+.view{display:none;flex:1;overflow-y:auto;padding:12px 14px;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 .view.active{display:block;}
+.view.mode-full{padding:0;overflow:hidden;display:none;flex-direction:column;}
+.view.mode-full.active{display:flex;}
+.view-mode-scroll{flex:1;overflow-y:auto;padding:12px 14px;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 
 /* Section cards */
 .section-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -188,8 +192,7 @@ a{color:var(--primary);text-decoration:none;}
 /* Scrollbars */
 ::-webkit-scrollbar{width:0;height:0;}
 
-.inline-foot{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom));left:0;right:0;max-width:720px;margin:0 auto;background:var(--bg);padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:10px;z-index:15;}
-.view.has-foot{padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 70px);}
+.inline-foot{flex-shrink:0;background:var(--bg);padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:10px;}
 
 @media print{
   body{max-width:none;padding:0;background:#fff;}
@@ -791,14 +794,16 @@ function startReview(due){
   const v=$('#view-review');
   const renderQ=()=>{
     const q=list[idx];
-    v.className='view active has-foot';
+    v.className='view mode-full active';
     v.innerHTML=`
       <div class="header"><div><h1>复习 ${idx+1}/${list.length}</h1></div><button class="header-btn" id="rv-close">退出</button></div>
-      <div class="review-card">
-        ${q.images.map(src=>`<img class="review-img" src="${src}">`).join('')}
-        <div class="review-q">${esc(q.text||'')}</div>
-        <div id="opts"></div>
-        <div id="rv-result" class="hidden"></div>
+      <div class="view-mode-scroll">
+        <div class="review-card">
+          ${q.images.map(src=>`<img class="review-img" src="${src}">`).join('')}
+          <div class="review-q">${esc(q.text||'')}</div>
+          <div id="opts"></div>
+          <div id="rv-result" class="hidden"></div>
+        </div>
       </div>
       <div class="inline-foot">
         <button class="btn btn-ghost" id="rv-prev" ${idx===0?'disabled':''}>上一题</button>
@@ -822,18 +827,20 @@ function startReview(due){
 
 function finishReview(list,answers){
   const v=$('#view-review');
-  v.className='view active';
+  v.className='view mode-full active';
   let correct=0;
   list.forEach(q=>{ if(answers[q.id]===q.answer) correct++; });
   v.innerHTML=`
     <div class="header"><h1>复习结果</h1></div>
-    <div class="review-card" style="text-align:center;margin-bottom:12px">
-      <div style="font-size:32px;font-weight:600;color:var(--primary)">${correct}/${list.length}</div>
-      <div style="color:var(--muted);font-size:13px">正确率 ${Math.round(correct/list.length*100)}%</div>
+    <div class="view-mode-scroll">
+      <div class="review-card" style="text-align:center;margin-bottom:12px">
+        <div style="font-size:32px;font-weight:600;color:var(--primary)">${correct}/${list.length}</div>
+        <div style="color:var(--muted);font-size:13px">正确率 ${Math.round(correct/list.length*100)}%</div>
+      </div>
+      <div class="toolbar"><button class="filter-chip active" id="sw-err">错题解析</button><button class="filter-chip" id="sw-all">全部解析</button></div>
+      <div id="res-list"></div>
     </div>
-    <div class="toolbar"><button class="filter-chip active" id="sw-err">错题解析</button><button class="filter-chip" id="sw-all">全部解析</button></div>
-    <div id="res-list"></div>
-    <div class="sheet-foot"><button class="btn btn-primary" id="done-rv">完成</button></div>
+    <div class="inline-foot"><button class="btn btn-primary" id="done-rv">完成</button></div>
   `;
   let mode='err';
   const renderRes=()=>{
@@ -950,13 +957,15 @@ function startExam(){
   const renderQ=()=>{
     const q=shuffled[idx];
     const opts=['A','B','C','D'];
-    v.className='view active has-foot';
+    v.className='view mode-full active';
     v.innerHTML=`
       <div class="header"><div><h1>答题 ${idx+1}/${shuffled.length}</h1></div><button class="header-btn" id="ex-close">退出</button></div>
-      <div class="review-card">
-        ${q.images.map(src=>`<img class="review-img" src="${src}">`).join('')}
-        <div class="review-q">${esc(q.text||'')}</div>
-        <div id="ex-opts">${opts.map(o=>`<div class="option ${answers[q.id]===o?'sel':''}" data-o="${o}"><div class="idx">${o}</div><div>选择 ${o}</div></div>`).join('')}</div>
+      <div class="view-mode-scroll">
+        <div class="review-card">
+          ${q.images.map(src=>`<img class="review-img" src="${src}">`).join('')}
+          <div class="review-q">${esc(q.text||'')}</div>
+          <div id="ex-opts">${opts.map(o=>`<div class="option ${answers[q.id]===o?'sel':''}" data-o="${o}"><div class="idx">${o}</div><div>选择 ${o}</div></div>`).join('')}</div>
+        </div>
       </div>
       <div class="inline-foot">
         <button class="btn btn-ghost" id="ex-prev" ${idx===0?'disabled':''}>上一题</button>
@@ -976,28 +985,30 @@ function startExam(){
 }
 function finishExam(list,answers){
   const v=$('#view-exam');
-  v.className='view active';
+  v.className='view mode-full active';
   let correct=0; list.forEach(q=>{ if(answers[q.id]===q.answer) correct++; });
   v.innerHTML=`
     <div class="header"><h1>交卷结果</h1></div>
-    <div class="review-card" style="text-align:center;margin-bottom:12px">
-      <div style="font-size:32px;font-weight:600;color:var(--primary)">${correct}/${list.length}</div>
-      <div style="color:var(--muted);font-size:13px">正确率 ${Math.round(correct/list.length*100)}%</div>
-    </div>
-    <div id="ex-res">${list.map((q,i)=>{
-      const ok=answers[q.id]===q.answer;
-      return `<div class="review-card" style="margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-          <span style="font-weight:600">第 ${i+1} 题</span>
-          <span class="${ok?'ok':'no'}">${ok?'正确':'错误'}</span>
-        </div>
+    <div class="view-mode-scroll">
+      <div class="review-card" style="text-align:center;margin-bottom:12px">
+        <div style="font-size:32px;font-weight:600;color:var(--primary)">${correct}/${list.length}</div>
+        <div style="color:var(--muted);font-size:13px">正确率 ${Math.round(correct/list.length*100)}%</div>
+      </div>
+      <div id="ex-res">${list.map((q,i)=>{
+        const ok=answers[q.id]===q.answer;
+        return `<div class="review-card" style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-weight:600">第 ${i+1} 题</span>
+            <span class="${ok?'ok':'no'}">${ok?'正确':'错误'}</span>
+          </div>
         ${q.images[0]?`<img class="review-img" src="${q.images[0]}">`:''}
         <div class="review-q">${esc(q.text||'')}</div>
         <div>你的答案：<b style="color:${ok?'var(--primary)':'var(--danger)'}">${answers[q.id]}</b> ${!ok?`正确答案：<b style="color:var(--primary)">${esc(q.answer||'?')}</b>`:''}</div>
         ${q.analysis?`<div style="margin-top:8px;font-size:13px;color:var(--muted)">解析：${esc(q.analysis)}</div>`:''}
       </div>`;
     }).join('')}</div>
-    <div class="sheet-foot"><button class="btn btn-primary" id="ex-back">返回组卷</button></div>
+    </div>
+    <div class="inline-foot"><button class="btn btn-primary" id="ex-back">返回组卷</button></div>
   `;
   $('#ex-back').onclick=()=>render.exam();
 }
