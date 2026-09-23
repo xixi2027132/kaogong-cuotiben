@@ -89,10 +89,10 @@ a{color:var(--primary);text-decoration:none;}
 .tag-chip.on{color:#fff;border-color:transparent;}
 
 /* Forms / Modals */
-.mask{position:fixed;inset:0;background:rgba(40,40,40,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
-.sheet{background:var(--bg);width:100%;max-width:720px;max-height:92vh;border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;}
+.mask{position:fixed;top:0;left:0;right:0;bottom:0;height:100dvh;height:100vh;background:rgba(40,40,40,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:86dvh;max-height:86vh;border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;}
 .sheet-center{align-items:center;}
-.sheet-center .sheet{border-radius:18px;max-height:none;margin:20px;width:calc(100% - 40px);}
+.sheet-center .sheet{border-radius:18px;max-height:86dvh;max-height:86vh;margin:20px;width:calc(100% - 40px);}
 .sheet-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
 .sheet-head h3{margin:0;font-size:17px;font-weight:600;}
 .sheet-body{padding:14px 16px;overflow-y:auto;flex:1;}
@@ -195,9 +195,17 @@ a{color:var(--primary);text-decoration:none;}
 .inline-foot{flex-shrink:0;background:var(--bg);padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:10px;}
 
 @media print{
-  body{max-width:none;padding:0;background:#fff;}
-  .nav,.header,.no-print{display:none !important;}
-  .print-area{display:block !important;}
+  @page{margin:18mm 14mm;}
+  html,body{height:auto;background:#fff;color:#000;overflow:visible;max-width:none;padding:0 !important;display:block !important;}
+  .nav,.view,.mask,.modal-root,.header,.inline-foot{display:none !important;}
+  .print-area{display:block !important;margin:0;padding:0;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:#222;background:#fff;}
+  .print-area h2{font-size:16px;border-bottom:1px solid #aaa;padding-bottom:8px;margin:0 0 16px;color:#222;}
+  .print-area .pitem{display:flex;gap:8px;margin-bottom:22px;page-break-inside:avoid;break-inside:avoid;}
+  .print-area .pno{font-weight:bold;min-width:26px;color:#222;}
+  .print-area .pbody{flex:1;}
+  .print-area .pbody img{max-width:100%;height:auto;display:block;margin-bottom:6px;page-break-inside:avoid;break-inside:avoid;}
+  .print-area .ptext{font-size:14px;line-height:1.7;white-space:pre-wrap;margin-bottom:4px;}
+  .print-area .pblank{height:70px;border-bottom:1px dashed #aaa;width:100%;margin-top:4px;}
 }
 </style>
 </head>
@@ -512,13 +520,13 @@ function renderSectionList(v){
 }
 
 function cardHTML(q){
-  const thumb=q.images[0]?`<img src="${q.images[0]}" alt="">`:`<svg class="icon" style="color:var(--border)" viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>`;
+  const thumb=(q.images||[])[0]?`<img src="${(q.images||[])[0]}" alt="">`:`<svg class="icon" style="color:var(--border)" viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>`;
   return `<div class="q-card" data-qid="${q.id}">
-    <div class="q-thumb">${thumb}${q.images.length>1?`<span class="more">+${q.images.length-1}</span>`:''}</div>
+    <div class="q-thumb">${thumb}${(q.images||[]).length>1?`<span class="more">+${q.images.length-1}</span>`:''}</div>
     <div class="q-body">
       ${q.source?`<div class="q-source">${esc(q.source)}</div>`:''}
       <div class="q-summary">${esc(q.text||'(图片题)')}</div>
-      <div class="q-tags">${q.tags.map(t=>`<span class="tag" style="background:${colorFor(t)}">${esc(t)}</span>`).join('')}${q.errorReasons.map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.8">${esc(t)}</span>`).join('')}</div>
+      <div class="q-tags">${(q.tags||[]).map(t=>`<span class="tag" style="background:${colorFor(t)}">${esc(t)}</span>`).join('')}${(q.errorReasons||[]).map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.8">${esc(t)}</span>`).join('')}</div>
       ${q.answer?`<div class="q-answer">答案：${esc(q.answer)}</div>`:''}
     </div>
     <button class="q-del" data-del="${q.id}"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
@@ -662,8 +670,8 @@ function showQuestionDetail(qid){
     <div class="sheet-body">
       <div id="d-imgs"></div>
       ${q.text?`<div class="detail-text">${esc(q.text)}</div>`:''}
-      <div class="detail-row"><div class="lbl">标签</div><div class="q-tags">${q.tags.map(t=>`<span class="tag" style="background:${colorFor(t)}">${esc(t)}</span>`).join('')}</div></div>
-      <div class="detail-row"><div class="lbl">错误原因</div><div class="q-tags">${q.errorReasons.map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.85">${esc(t)}</span>`).join('')}</div></div>
+      <div class="detail-row"><div class="lbl">标签</div><div class="q-tags">${(q.tags||[]).map(t=>`<span class="tag" style="background:${colorFor(t)}">${esc(t)}</span>`).join('')}</div></div>
+      <div class="detail-row"><div class="lbl">错误原因</div><div class="q-tags">${(q.errorReasons||[]).map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.85">${esc(t)}</span>`).join('')}</div></div>
       ${q.source?`<div class="detail-row"><div class="lbl">来源</div><div>${esc(q.source)}</div></div>`:''}
       <button class="toggle-btn" id="toggle-ans"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg><span id="ta-txt">显示答案和解题思路</span></button>
       <div id="ans-box" class="hidden" style="margin-top:12px">
@@ -674,7 +682,7 @@ function showQuestionDetail(qid){
     </div>
     <div class="sheet-foot"><button class="btn btn-danger" id="m-del">删除</button></div>`);
   const imgBox=el.querySelector('#d-imgs');
-  imgBox.innerHTML=q.images.map(src=>`<img class="detail-img" src="${src}">`).join('');
+  imgBox.innerHTML=(q.images||[]).map(src=>`<img class="detail-img" src="${src}">`).join('');
   imgBox.querySelectorAll('img').forEach(img=>img.onclick=()=>showPreview(img.src));
   const ansBox=el.querySelector('#ans-box');
   el.querySelector('#toggle-ans').onclick=()=>{
@@ -724,7 +732,7 @@ render.review=()=>{
         return `<div class="q-card" style="margin-bottom:8px"><div class="q-body" style="min-width:0">
           ${s?`<div class="q-source">${esc(s.name)}</div>`:''}
           <div class="q-summary">${esc(q.text||'(图片题)')}</div>
-          <div class="q-tags">${q.errorReasons.map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.85">${esc(t)}</span>`).join('')}</div>
+          <div class="q-tags">${(q.errorReasons||[]).map(t=>`<span class="tag" style="background:${colorFor(t)};opacity:.85">${esc(t)}</span>`).join('')}</div>
         </div></div>`;
       }).join(''):'<div class="empty" style="padding:30px">今天没有待复习的题目</div>'}</div>
     </div>
@@ -794,12 +802,13 @@ function startReview(due){
   const v=$('#view-review');
   const renderQ=()=>{
     const q=list[idx];
+    const imgs=q.images||[];
     v.className='view mode-full active';
     v.innerHTML=`
       <div class="header"><div><h1>复习 ${idx+1}/${list.length}</h1></div><button class="header-btn" id="rv-close">退出</button></div>
       <div class="view-mode-scroll">
         <div class="review-card">
-          ${q.images.map(src=>`<img class="review-img" src="${src}">`).join('')}
+          ${imgs.map(src=>`<img class="review-img" src="${src}">`).join('')}
           <div class="review-q">${esc(q.text||'')}</div>
           <div id="opts"></div>
           <div id="rv-result" class="hidden"></div>
@@ -814,7 +823,7 @@ function startReview(due){
     const optBox=v.querySelector('#opts');
     optBox.innerHTML=opts.map(o=>`<div class="option ${answers[q.id]===o?'sel':''}" data-o="${o}"><div class="idx">${o}</div><div>选择 ${o}</div></div>`).join('');
     optBox.querySelectorAll('.option').forEach(o=>o.onclick=()=>{ answers[q.id]=o.dataset.o; renderQ(); });
-    $('#rv-close').onclick=()=>{ if(confirm('确定退出复习？进度将不保存')) render.review(); };
+    $('#rv-close').onclick=()=>{ if(confirm('确定退出复习？进度将不保存')) navTo('review'); };
     $('#rv-prev').onclick=()=>{ idx--; renderQ(); };
     $('#rv-next').onclick=()=>{
       if(!answers[q.id]){ toast('请选择答案'); return; }
@@ -852,7 +861,7 @@ function finishReview(list,answers){
           <span style="font-weight:600">第 ${list.indexOf(q)+1} 题</span>
           <span class="${isOk?'ok':'no'}">${isOk?'正确':'错误'}</span>
         </div>
-        ${q.images[0]?`<img class="review-img" src="${q.images[0]}">`:''}
+        ${(q.images||[])[0]?`<img class="review-img" src="${(q.images||[])[0]}">`:''}
         <div class="review-q">${esc(q.text||'')}</div>
         <div>你的答案：<b style="color:${isOk?'var(--primary)':'var(--danger)'}">${answers[q.id]}</b> ${!isOk?`正确答案：<b style="color:var(--primary)">${esc(q.answer||'?')}</b>`:''}</div>
         ${q.analysis?`<div style="margin-top:8px;font-size:13px;color:var(--muted)">解析：${esc(q.analysis)}</div>`:''}
@@ -863,16 +872,21 @@ function finishReview(list,answers){
   $('#sw-err').onclick=()=>{ mode='err'; $('#sw-err').classList.add('active'); $('#sw-all').classList.remove('active'); renderRes(); };
   $('#sw-all').onclick=()=>{ mode='all'; $('#sw-all').classList.add('active'); $('#sw-err').classList.remove('active'); renderRes(); };
   $('#done-rv').onclick=async()=>{
-    const now=Date.now();
-    for(const q of list){
-      const ok=answers[q.id]===q.answer;
-      q.nextReview=now+REVIEW_INTERVALS[q.intervalIdx]*DAY;
-      if(ok){ q.intervalIdx=Math.min(q.intervalIdx+1, REVIEW_INTERVALS.length-1); }
-      else { q.intervalIdx=0; }
-      q.reviewCount=(q.reviewCount||0)+1;
-      await dbPut('questions',q);
-    }
-    await checkin(); await loadAll(); await backup(); render.review(); toast('复习完成');
+    try{
+      const now=Date.now();
+      for(const q of list){
+        const ok=answers[q.id]===q.answer;
+        const idx=Math.max(0, Math.min(q.intervalIdx||0, REVIEW_INTERVALS.length-1));
+        q.nextReview=now+REVIEW_INTERVALS[idx]*DAY;
+        if(ok){ q.intervalIdx=Math.min(idx+1, REVIEW_INTERVALS.length-1); }
+        else { q.intervalIdx=0; }
+        q.reviewCount=(q.reviewCount||0)+1;
+        await dbPut('questions',q);
+      }
+      await checkin(); await loadAll(); await backup();
+      navTo('review');
+      toast('复习完成');
+    }catch(e){ console.error(e); toast('保存失败：'+(e.message||e)); }
   };
 }
 
@@ -957,12 +971,13 @@ function startExam(){
   const renderQ=()=>{
     const q=shuffled[idx];
     const opts=['A','B','C','D'];
+    const imgs=q.images||[];
     v.className='view mode-full active';
     v.innerHTML=`
       <div class="header"><div><h1>答题 ${idx+1}/${shuffled.length}</h1></div><button class="header-btn" id="ex-close">退出</button></div>
       <div class="view-mode-scroll">
         <div class="review-card">
-          ${q.images.map(src=>`<img class="review-img" src="${src}">`).join('')}
+          ${imgs.map(src=>`<img class="review-img" src="${src}">`).join('')}
           <div class="review-q">${esc(q.text||'')}</div>
           <div id="ex-opts">${opts.map(o=>`<div class="option ${answers[q.id]===o?'sel':''}" data-o="${o}"><div class="idx">${o}</div><div>选择 ${o}</div></div>`).join('')}</div>
         </div>
@@ -973,7 +988,7 @@ function startExam(){
       </div>
     `;
     v.querySelectorAll('#ex-opts .option').forEach(o=>o.onclick=()=>{ answers[q.id]=o.dataset.o; renderQ(); });
-    $('#ex-close').onclick=()=>{ if(confirm('退出？进度不保存')) render.exam(); };
+    $('#ex-close').onclick=()=>{ if(confirm('退出？进度不保存')) navTo('exam'); };
     $('#ex-prev').onclick=()=>{ idx--; renderQ(); };
     $('#ex-next').onclick=()=>{
       if(!answers[q.id]){ toast('请选择答案'); return; }
@@ -1001,7 +1016,7 @@ function finishExam(list,answers){
             <span style="font-weight:600">第 ${i+1} 题</span>
             <span class="${ok?'ok':'no'}">${ok?'正确':'错误'}</span>
           </div>
-        ${q.images[0]?`<img class="review-img" src="${q.images[0]}">`:''}
+        ${(q.images||[])[0]?`<img class="review-img" src="${(q.images||[])[0]}">`:''}
         <div class="review-q">${esc(q.text||'')}</div>
         <div>你的答案：<b style="color:${ok?'var(--primary)':'var(--danger)'}">${answers[q.id]}</b> ${!ok?`正确答案：<b style="color:var(--primary)">${esc(q.answer||'?')}</b>`:''}</div>
         ${q.analysis?`<div style="margin-top:8px;font-size:13px;color:var(--muted)">解析：${esc(q.analysis)}</div>`:''}
@@ -1166,9 +1181,9 @@ function showPdfExport(){
         <div class="tag-wrap" id="pdf-secs">${S.sections.map(s=>`<label class="tag-chip" style="cursor:pointer"><input type="checkbox" value="${s.id}" checked style="display:none">${esc(s.name)}</label>`).join('')}</div>
       </div>
       <div class="field"><label>选择标签（可选）</label>
-        <div class="tag-wrap" id="pdf-tags">${[...new Set(S.questions.flatMap(q=>q.tags))].map(t=>`<label class="tag-chip" style="cursor:pointer"><input type="checkbox" value="${esc(t)}" style="display:none">${esc(t)}</label>`).join('')}</div>
+        <div class="tag-wrap" id="pdf-tags">${[...new Set(S.questions.flatMap(q=>q.tags))].filter(Boolean).map(t=>`<label class="tag-chip" style="cursor:pointer"><input type="checkbox" value="${esc(t)}" style="display:none">${esc(t)}</label>`).join('')}</div>
       </div>
-      <div style="font-size:12px;color:var(--muted)">仅导出题目图片和文字，不含解析、来源、错因</div>
+      <div style="font-size:12px;color:var(--muted)">仅导出题目图片和文字，不含解析、来源、错因。下一页留空白供做题。</div>
     </div>
     <div class="sheet-foot">
       <button class="btn btn-ghost" id="m-cancel">取消</button>
@@ -1176,52 +1191,66 @@ function showPdfExport(){
     </div>`);
   const secWrap=el.querySelector('#pdf-secs');
   const tagWrap=el.querySelector('#pdf-tags');
-  secWrap.querySelectorAll('label').forEach(l=>{
-    l.onclick=()=>{ const cb=l.querySelector('input'); cb.checked=!cb.checked; l.style.background=cb.checked?'var(--primary)':''; l.style.color=cb.checked?'#fff':''; };
-    l.querySelector('input').checked=true; l.style.background='var(--primary)'; l.style.color='#fff';
-  });
-  tagWrap.querySelectorAll('label').forEach(l=>{
-    l.onclick=()=>{ const cb=l.querySelector('input'); cb.checked=!cb.checked; l.style.background=cb.checked?'var(--primary)':''; l.style.color=cb.checked?'#fff':''; };
-  });
+  const styleOn=l=>{const cb=l.querySelector('input'); cb.checked=true; l.style.background='var(--primary)'; l.style.color='#fff';};
+  const styleToggle=l=>{const cb=l.querySelector('input'); cb.checked=!cb.checked; l.style.background=cb.checked?'var(--primary)':''; l.style.color=cb.checked?'#fff':'';};
+  secWrap.querySelectorAll('label').forEach(l=>{ l.onclick=()=>styleToggle(l); styleOn(l); });
+  tagWrap.querySelectorAll('label').forEach(l=>{ l.onclick=()=>styleToggle(l); });
   el.querySelector('#m-cancel').onclick=()=>el.remove();
   el.querySelector('#m-ok').onclick=()=>{
     const secs=[...secWrap.querySelectorAll('input:checked')].map(x=>x.value);
     const tags=[...tagWrap.querySelectorAll('input:checked')].map(x=>x.value);
     if(!secs.length){ toast('请选择板块'); return; }
     let qs=S.questions.filter(q=>secs.includes(q.sectionId));
-    if(tags.length) qs=qs.filter(q=>q.tags.some(t=>tags.includes(t)));
-    doPdfExport(qs); el.remove();
+    if(tags.length) qs=qs.filter(q=>(q.tags||[]).some(t=>tags.includes(t)));
+    if(!qs.length){ toast('没有匹配的题目'); return; }
+    el.remove();
+    doPdfExport(qs);
   };
 }
 function doPdfExport(qs){
-  const w=window.open('','_blank');
-  if(!w){ toast('请允许弹出窗口'); return; }
+  // 构建 print-area 注入 body，用 @media print 控制
   const secName=sid=>S.sections.find(s=>s.id===sid)?.name||'';
-  const items=qs.map((q,i)=>`
-    <div class="pitem">
+  const items=qs.map((q,i)=>{
+    const imgs=(q.images||[]).map(src=>`<img src="${esc(src)}" alt="题图">`).join('');
+    const txt=q.text?`<div class="ptext">${esc(q.text)}</div>`:'';
+    return `<div class="pitem">
       <div class="pno">${i+1}.</div>
-      <div class="pbody">
-        ${q.images.map(src=>`<img src="${src}">`).join('')}
-        ${q.text?`<div class="ptext">${esc(q.text)}</div>`:''}
-      </div>
+      <div class="pbody">${imgs}${txt}</div>
       <div class="pblank"></div>
-    </div>`).join('');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>错题导出</title>
-    <style>
-      body{font-family:-apple-system,"PingFang SC",sans-serif;padding:20px;color:#333;}
-      h2{font-size:16px;border-bottom:1px solid #ddd;padding-bottom:8px;}
-      .pitem{display:flex;gap:8px;margin-bottom:24px;page-break-inside:avoid;}
-      .pno{font-weight:bold;min-width:24px;}
-      .pbody{flex:1;}
-      .pbody img{max-width:100%;height:auto;display:block;margin-bottom:6px;}
-      .ptext{font-size:14px;line-height:1.6;white-space:pre-wrap;margin-bottom:6px;}
-      .pblank{height:60px;border-bottom:1px dashed #ccc;width:100%;margin-top:4px;}
-    </style></head><body>
+    </div>`;
+  }).join('');
+
+  // 如果已有 print-area 先清掉
+  document.querySelectorAll('.print-area').forEach(n=>n.remove());
+
+  const node=document.createElement('div');
+  node.className='print-area';
+  node.style.display='none';
+  node.innerHTML=`
     <h2>错题导出（共 ${qs.length} 题）</h2>
     ${items}
-    <script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script>
-    </body></html>`);
-  w.document.close();
+  `;
+  document.body.appendChild(node);
+
+  // 等所有图加载完再 print
+  const imgs=node.querySelectorAll('img');
+  const total=imgs.length;
+  let loaded=0;
+  const fire=()=>{
+    // 触发打印后移除，恢复正常页面
+    setTimeout(()=>{
+      try{ window.print(); }catch(e){ toast('打印失败'); }
+      setTimeout(()=>node.remove(),2000);
+    },200);
+  };
+  if(total===0){ fire(); return; }
+  imgs.forEach(img=>{
+    const done=()=>{ loaded++; if(loaded>=total) fire(); };
+    img.addEventListener('load',done,{once:true});
+    img.addEventListener('error',done,{once:true});
+    // 兜底：如果已 complete
+    if(img.complete) done();
+  });
 }
 
 /* ---------- helpers ---------- */
