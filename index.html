@@ -89,14 +89,14 @@ a{color:var(--primary);text-decoration:none;}
 .tag-chip.on{color:#fff;border-color:transparent;}
 
 /* Forms / Modals */
-.mask{position:fixed;top:0;left:0;right:0;bottom:0;height:100dvh;height:100vh;background:rgba(40,40,40,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
-.sheet{background:var(--bg);width:100%;max-width:720px;max-height:86dvh;max-height:86vh;border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;}
+.mask{position:fixed;top:0;left:0;right:0;bottom:0;height:100dvh;height:100vh;background:rgba(40,40,40,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:88dvh;max-height:88vh;border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
 .sheet-center{align-items:center;}
 .sheet-center .sheet{border-radius:18px;max-height:86dvh;max-height:86vh;margin:20px;width:calc(100% - 40px);}
-.sheet-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.sheet-head{flex-shrink:0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
 .sheet-head h3{margin:0;font-size:17px;font-weight:600;}
-.sheet-body{padding:14px 16px;overflow-y:auto;flex:1;}
-.sheet-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;}
+.sheet-body{flex:1 1 auto;min-height:0;padding:14px 16px;overflow-y:auto;}
+.sheet-foot{flex-shrink:0;padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;}
 .field{margin-bottom:14px;}
 .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
 .field .req{color:var(--danger);}
@@ -194,11 +194,21 @@ a{color:var(--primary);text-decoration:none;}
 
 .inline-foot{flex-shrink:0;background:var(--bg);padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:10px;}
 
+/* Print mode: add .body-printing to body; only print-area shown */
+.body-printing .view,
+.body-printing .nav,
+.body-printing .mask,
+.body-printing #modal-root,
+.body-printing .header,
+.body-printing .inline-foot,
+.body-printing .toast{display:none !important;}
+.body-printing .print-area{display:block !important;position:static !important;left:auto !important;top:auto !important;width:auto !important;height:auto !important;margin:0 auto !important;padding:0 14px !important;overflow:visible !important;}
+
 @media print{
   @page{margin:18mm 14mm;}
-  html,body{height:auto;background:#fff;color:#000;overflow:visible;max-width:none;padding:0 !important;display:block !important;}
-  .nav,.view,.mask,.modal-root,.header,.inline-foot{display:none !important;}
-  .print-area{display:block !important;margin:0;padding:0;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:#222;background:#fff;}
+  html,body{height:auto;background:#fff;color:#000;overflow:visible;max-width:none;padding:0 !important;}
+  .nav,.view,.mask,#modal-root,.header,.inline-foot{display:none !important;}
+  .print-area{display:block !important;margin:0;padding:0;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:#222;background:#fff;max-width:none;}
   .print-area h2{font-size:16px;border-bottom:1px solid #aaa;padding-bottom:8px;margin:0 0 16px;color:#222;}
   .print-area .pitem{display:flex;gap:8px;margin-bottom:22px;page-break-inside:avoid;break-inside:avoid;}
   .print-area .pno{font-weight:bold;min-width:26px;color:#222;}
@@ -1208,8 +1218,6 @@ function showPdfExport(){
   };
 }
 function doPdfExport(qs){
-  // 构建 print-area 注入 body，用 @media print 控制
-  const secName=sid=>S.sections.find(s=>s.id===sid)?.name||'';
   const items=qs.map((q,i)=>{
     const imgs=(q.images||[]).map(src=>`<img src="${esc(src)}" alt="题图">`).join('');
     const txt=q.text?`<div class="ptext">${esc(q.text)}</div>`:'';
@@ -1220,36 +1228,52 @@ function doPdfExport(qs){
     </div>`;
   }).join('');
 
-  // 如果已有 print-area 先清掉
   document.querySelectorAll('.print-area').forEach(n=>n.remove());
 
+  // 关键：print-area 保持 display:block，但移出视口左侧
+  // Safari 在 display:none 的容器里不会渲染 base64 data URL 的 img（已确认的 bug）
   const node=document.createElement('div');
   node.className='print-area';
-  node.style.display='none';
+  node.style.cssText='display:block !important;position:fixed;left:-2000px;top:0;width:640px;background:#fff;color:#222;overflow:visible;';
   node.innerHTML=`
     <h2>错题导出（共 ${qs.length} 题）</h2>
     ${items}
+    <div style="font-size:12px;color:#888;margin-top:24px">— 考公错题本导出 —</div>
   `;
   document.body.appendChild(node);
 
-  // 等所有图加载完再 print
   const imgs=node.querySelectorAll('img');
   const total=imgs.length;
   let loaded=0;
-  const fire=()=>{
-    // 触发打印后移除，恢复正常页面
-    setTimeout(()=>{
-      try{ window.print(); }catch(e){ toast('打印失败'); }
-      setTimeout(()=>node.remove(),2000);
-    },200);
+  const finish=()=>{
+    // 等一帧让 Safari 把 data URL 完全解好
+    requestAnimationFrame(()=>{
+      document.body.classList.add('body-printing');
+      // 再等一帧让 body-printing 生效
+      requestAnimationFrame(()=>{
+        try{
+          const w=window.open('','_self');
+          if(w){ w.close(); } // no-op for popup-blocker detection hint
+          window.print();
+        }catch(e){ toast('打印失败：'+e.message); cleanup(); return; }
+        // 用户关闭打印对话框后（onafterprint 不总是可用），延时恢复
+        setTimeout(cleanup,500);
+      });
+    });
   };
-  if(total===0){ fire(); return; }
+  const cleanup=()=>{
+    document.body.classList.remove('body-printing');
+    // 如果 window.print 被取消，用户回到 app，保留 print-area 有副作用——2s 后自动移除
+    setTimeout(()=>node.remove(),2000);
+  };
+  if(total===0){ finish(); return; }
+  let done=false;
+  const tick=()=>{ loaded++; if(loaded>=total && !done){ done=true; finish(); }};
   imgs.forEach(img=>{
-    const done=()=>{ loaded++; if(loaded>=total) fire(); };
-    img.addEventListener('load',done,{once:true});
-    img.addEventListener('error',done,{once:true});
-    // 兜底：如果已 complete
-    if(img.complete) done();
+    img.addEventListener('load',tick,{once:true});
+    img.addEventListener('error',tick,{once:true});
+    if(img.complete && img.naturalWidth>0) tick();
+    else if(img.complete && img.naturalWidth===0) tick(); // error case
   });
 }
 
