@@ -1228,53 +1228,67 @@ function doPdfExport(qs){
     </div>`;
   }).join('');
 
-  document.querySelectorAll('.print-area').forEach(n=>n.remove());
-
-  // 关键：print-area 保持 display:block，但移出视口左侧
-  // Safari 在 display:none 的容器里不会渲染 base64 data URL 的 img（已确认的 bug）
-  const node=document.createElement('div');
-  node.className='print-area';
-  node.style.cssText='display:block !important;position:fixed;left:-2000px;top:0;width:640px;background:#fff;color:#222;overflow:visible;';
-  node.innerHTML=`
-    <h2>错题导出（共 ${qs.length} 题）</h2>
-    ${items}
-    <div style="font-size:12px;color:#888;margin-top:24px">— 考公错题本导出 —</div>
-  `;
-  document.body.appendChild(node);
-
-  const imgs=node.querySelectorAll('img');
-  const total=imgs.length;
-  let loaded=0;
-  const finish=()=>{
-    // 等一帧让 Safari 把 data URL 完全解好
-    requestAnimationFrame(()=>{
-      document.body.classList.add('body-printing');
-      // 再等一帧让 body-printing 生效
-      requestAnimationFrame(()=>{
-        try{
-          const w=window.open('','_self');
-          if(w){ w.close(); } // no-op for popup-blocker detection hint
-          window.print();
-        }catch(e){ toast('打印失败：'+e.message); cleanup(); return; }
-        // 用户关闭打印对话框后（onafterprint 不总是可用），延时恢复
-        setTimeout(cleanup,500);
+  const fullHtml=`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>错题导出（${qs.length}题）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  @page{margin:18mm 14mm;}
+  html,body{margin:0;padding:0;background:#fff;color:#222;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;}
+  body{padding:20px;max-width:800px;margin:0 auto;}
+  h2{font-size:16px;border-bottom:1px solid #aaa;padding-bottom:8px;margin:0 0 16px;color:#222;}
+  .pitem{display:flex;gap:8px;margin-bottom:22px;page-break-inside:avoid;break-inside:avoid;}
+  .pno{font-weight:bold;min-width:26px;color:#222;font-size:15px;}
+  .pbody{flex:1;}
+  .pbody img{max-width:100%;height:auto;display:block;margin-bottom:6px;}
+  .ptext{font-size:14px;line-height:1.7;white-space:pre-wrap;margin-bottom:4px;}
+  .pblank{height:70px;border-bottom:1px dashed #aaa;width:100%;margin-top:4px;}
+  .foot{margin-top:24px;font-size:12px;color:#888;text-align:center;}
+  @media print{
+    @page{margin:18mm 14mm;}
+    body{padding:0;max-width:none;}
+    .pitem{page-break-inside:avoid;break-inside:avoid;}
+    .pbody img{page-break-inside:avoid;break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+  <h2>错题导出（共 ${qs.length} 题）</h2>
+  ${items}
+  <div class="foot">— 考公错题本导出 —</div>
+  <script>
+    // 等所有图 load 完再弹打印对话框（Safari 需要这一步）
+    (function(){
+      var imgs=document.querySelectorAll('img');
+      var total=imgs.length, loaded=0, done=false;
+      function tick(){ loaded++; if(loaded>=total && !done){ done=true; setTimeout(function(){ window.print(); }, 200); } }
+      if(total===0){ setTimeout(function(){ window.print(); }, 200); return; }
+      imgs.forEach(function(img){
+        img.addEventListener('load', tick, {once:true});
+        img.addEventListener('error', tick, {once:true});
+        if(img.complete){ tick(); }
       });
-    });
-  };
-  const cleanup=()=>{
-    document.body.classList.remove('body-printing');
-    // 如果 window.print 被取消，用户回到 app，保留 print-area 有副作用——2s 后自动移除
-    setTimeout(()=>node.remove(),2000);
-  };
-  if(total===0){ finish(); return; }
-  let done=false;
-  const tick=()=>{ loaded++; if(loaded>=total && !done){ done=true; finish(); }};
-  imgs.forEach(img=>{
-    img.addEventListener('load',tick,{once:true});
-    img.addEventListener('error',tick,{once:true});
-    if(img.complete && img.naturalWidth>0) tick();
-    else if(img.complete && img.naturalWidth===0) tick(); // error case
-  });
+    })();
+  <\/script>
+</body>
+</html>`;
+
+  try{
+    const blob=new Blob([fullHtml], {type:'text/html'});
+    const url=URL.createObjectURL(blob);
+    const w=window.open(url, '_blank');
+    if(!w){
+      // Safari/iOS 有时不允许 window.open，fallback：location.href 跳转
+      window.location.href=url;
+      toast('已跳转，等打印对话框弹出');
+    }
+    // 1 分钟后释放 Blob URL
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){
+    toast('导出失败：'+e.message);
+  }
 }
 
 /* ---------- helpers ---------- */
